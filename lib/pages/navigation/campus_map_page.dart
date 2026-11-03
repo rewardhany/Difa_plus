@@ -4,14 +4,16 @@ import 'package:provider/provider.dart';
 import '../../controllers/accessibility_controller.dart';
 import '../../controllers/map_controller.dart';
 import '../../core/services/tts_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/accessible_button.dart';
+import '../../core/widgets/accessible_text_field.dart';
 import '../../models/campus_map.dart';
 
 /// Boundary: CampusMapPage
 /// Merealisasikan UC-05 Show Campus Maps.
 ///
 /// Tampilan menyesuaikan profil disabilitas (hasil UC-04):
-/// - Netra: mode suara. Tidak ada peta visual, hanya daftar lokasi besar,
+/// - Netra: mode suara. Tidak ada peta visual, hanya daftar lokasi,
 ///   dan setiap aksi diumumkan lewat TTS.
 /// - Lainnya: peta visual yang bisa disentuh + daftar lokasi.
 class CampusMapPage extends StatefulWidget {
@@ -22,6 +24,8 @@ class CampusMapPage extends StatefulWidget {
 }
 
 class _CampusMapPageState extends State<CampusMapPage> {
+  final _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +34,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     TtsService.instance.stop();
     super.dispose();
   }
@@ -41,6 +46,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
   Future<void> openCampusMapMenu() async {
     final controller = context.read<MapController>();
     final isNetra = _isNetra;
+    _searchController.clear();
     await controller.showCampusMap();
     if (!mounted || !isNetra) return;
 
@@ -65,7 +71,15 @@ class _CampusMapPageState extends State<CampusMapPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Peta Kampus')),
-      body: SafeArea(child: _buildBody(controller, isNetra)),
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: _buildBody(controller, isNetra),
+          ),
+        ),
+      ),
     );
   }
 
@@ -88,6 +102,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
 
   /// displayMapRequestError() — Exception Flow UC-05.
   Widget _displayMapRequestError() {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -99,7 +114,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
             child: Text(
               'Data denah kampus gagal diterima. Periksa koneksi lalu coba lagi.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: scheme.error),
             ),
           ),
           const SizedBox(height: 16),
@@ -120,6 +135,13 @@ class _CampusMapPageState extends State<CampusMapPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        AccessibleTextField(
+          label: 'Cari lokasi',
+          controller: _searchController,
+          prefixIcon: Icons.search,
+          onChanged: controller.setSearchQuery,
+        ),
+        const SizedBox(height: 12),
         _buildFilters(controller),
         const SizedBox(height: 12),
         if (!isNetra) ...[
@@ -130,32 +152,55 @@ class _CampusMapPageState extends State<CampusMapPage> {
         const SizedBox(height: 8),
         Text(
           'Daftar Lokasi (${locations.length})',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
+        const SizedBox(height: 8),
         if (locations.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text('Tidak ada lokasi yang cocok dengan filter.'),
+            child: Text('Tidak ada lokasi yang cocok.'),
           ),
-        for (final location in locations)
-          Semantics(
-            button: true,
-            excludeSemantics: true,
-            label: '${location.name}. ${location.audioDescription}',
-            onTap: () => selectLocation(location),
-            child: ListTile(
-              selected: location.id == controller.campusMap?.selectedLocationId,
-              title: Text(location.name),
-              subtitle: Text('${location.building} • Lantai ${location.floor}'),
-              trailing: Icon(
-                location.isWheelchairAccessible
-                    ? Icons.accessible
-                    : Icons.not_accessible,
-              ),
-              onTap: () => selectLocation(location),
-            ),
-          ),
+        for (final location in locations) _buildLocationTile(controller, location),
       ],
+    );
+  }
+
+  Widget _buildLocationTile(MapController controller, CampusLocation location) {
+    final selected = location.id == controller.campusMap?.selectedLocationId;
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: '${location.name}. ${location.audioDescription}',
+      onTap: () => selectLocation(location),
+      child: Card(
+        color: selected ? AppColors.surfaceTint : Colors.white,
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: selected ? Theme.of(context).colorScheme.primary : AppColors.border,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: Text(
+            location.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text('${location.building} • Lantai ${location.floor}'),
+          trailing: Icon(
+            location.isWheelchairAccessible
+                ? Icons.accessible
+                : Icons.not_accessible,
+          ),
+          onTap: () => selectLocation(location),
+        ),
+      ),
     );
   }
 
@@ -188,16 +233,22 @@ class _CampusMapPageState extends State<CampusMapPage> {
       aspectRatio: 4 / 3,
       child: Container(
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          border: Border.all(color: scheme.outline),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(16),
         ),
+        clipBehavior: Clip.antiAlias,
         child: LayoutBuilder(
           builder: (context, box) {
             const markerWidth = 70.0;
             const markerHeight = 62.0;
             return Stack(
               children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _GridPainter(AppColors.border.withAlpha(120)),
+                  ),
+                ),
                 for (final location in controller.visibleLocations)
                   Positioned(
                     left: location.x * (box.maxWidth - markerWidth),
@@ -212,13 +263,28 @@ class _CampusMapPageState extends State<CampusMapPage> {
                           width: markerWidth,
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.place,
-                                size: 36,
-                                color: location.id == selectedId
-                                    ? scheme.error
-                                    : scheme.primary,
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: location.id == selectedId
+                                      ? scheme.primary
+                                      : Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: scheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.place,
+                                  size: 22,
+                                  color: location.id == selectedId
+                                      ? Colors.white
+                                      : scheme.primary,
+                                ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
                                 location.name,
                                 maxLines: 1,
@@ -245,12 +311,25 @@ class _CampusMapPageState extends State<CampusMapPage> {
     if (location == null) return const SizedBox.shrink();
 
     return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(location.name, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              location.name,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
             Text('${location.building} • Lantai ${location.floor}'),
             const SizedBox(height: 8),
             Text(location.audioDescription),
@@ -270,6 +349,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
             // UC-06 Get Campus Route dibangun di update berikutnya.
             const AccessibleButton(
               label: 'Tentukan Rute (segera hadir)',
+              icon: Icons.directions,
               onPressed: null,
             ),
           ],
@@ -277,4 +357,28 @@ class _CampusMapPageState extends State<CampusMapPage> {
       ),
     );
   }
+}
+
+class _GridPainter extends CustomPainter {
+  final Color color;
+
+  const _GridPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    const step = 32.0;
+    for (double x = step; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = step; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

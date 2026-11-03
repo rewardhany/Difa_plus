@@ -25,10 +25,14 @@ class MapController extends ChangeNotifier {
   MapLoadStatus status = MapLoadStatus.idle;
   CampusMap? campusMap;
   final Set<MapFilter> activeFilters = {};
+  String searchQuery = '';
 
   /// showCampusMap() — dipanggil CampusMapPage saat peta dibuka.
   Future<void> showCampusMap() async {
     status = MapLoadStatus.loading;
+    // Pencarian & filter di-reset tiap peta dibuka supaya sinkron dengan UI.
+    searchQuery = '';
+    activeFilters.clear();
     notifyListeners();
 
     try {
@@ -53,11 +57,14 @@ class MapController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lokasi yang tampil setelah filter diterapkan (semua filter harus terpenuhi).
+  /// Lokasi yang tampil setelah pencarian & filter diterapkan.
   List<CampusLocation> get visibleLocations {
     final all = campusMap?.locations ?? const <CampusLocation>[];
-    if (activeFilters.isEmpty) return all;
     return all.where((l) {
+      if (searchQuery.isNotEmpty &&
+          !'${l.name} ${l.building}'.toLowerCase().contains(searchQuery)) {
+        return false;
+      }
       if (activeFilters.contains(MapFilter.ramp) && !l.hasRamp) return false;
       if (activeFilters.contains(MapFilter.lift) && !l.hasLift) return false;
       if (activeFilters.contains(MapFilter.accessibleToilet) &&
@@ -66,6 +73,11 @@ class MapController extends ChangeNotifier {
       }
       return true;
     }).toList();
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery = query.trim().toLowerCase();
+    notifyListeners();
   }
 
   void toggleFilter(MapFilter filter) {

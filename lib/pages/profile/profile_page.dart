@@ -3,19 +3,37 @@ import 'package:provider/provider.dart';
 import '../../controllers/accessibility_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/profile_controller.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/accessible_button.dart';
+import '../../core/widgets/centered_content.dart';
+import '../../core/widgets/error_banner.dart';
 import '../../models/disability_profile.dart';
 
 /// Boundary: ProfilePage
 /// Merealisasikan UC-03 Set Disability Profile.
 ///
-/// Ini adalah titik di mana konsep "UI adaptif per kategori
-/// disabilitas" pertama kali ditetapkan oleh mahasiswa, lalu
-/// dipakai ulang oleh UC-04 di setiap sesi berikutnya.
-class ProfilePage extends StatelessWidget {
+/// Halaman ini juga dipakai untuk mengubah profil dari Beranda:
+/// saat dibuka, pilihan awal diisi dari profil yang tersimpan.
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
-  Future<void> _handleSave(BuildContext context) async {
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final profile = context.read<AccessibilityController>().profile;
+      // Mengisi pilihan awal dari profil tersimpan (kosong kalau baru).
+      context.read<ProfileController>().cancelEditing(profile);
+    });
+  }
+
+  Future<void> _handleSave() async {
     final profileController = context.read<ProfileController>();
     final authController = context.read<AuthController>();
     final accessibilityController = context.read<AccessibilityController>();
@@ -25,11 +43,12 @@ class ProfilePage extends StatelessWidget {
 
     final success = await profileController.saveProfile(uid);
 
-    if (success && context.mounted) {
-      // showConfirmation() -> muat ulang profil supaya tema ter-apply
+    if (success && mounted) {
+      // Muat ulang profil supaya tema adaptif langsung ter-apply.
       await accessibilityController.loadAccessibilityProfile(uid);
-      if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
+      if (mounted) {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/home', (route) => false);
       }
     }
   }
@@ -37,67 +56,54 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileController = context.watch<ProfileController>();
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Atur Profil Disabilitas')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Pilih kategori disabilitas Anda',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Boleh pilih lebih dari satu. Sistem akan menyesuaikan '
-                'tampilan dan fitur berdasarkan pilihan ini.',
-              ),
-              const SizedBox(height: 20),
-
-              // Fase 1 menampilkan 3 kategori yang sudah diimplementasikan
-              // penuh (netra, rungu/wicara, fisik). Intelektual &
-              // mental/psikososial tetap ditampilkan di model (lihat
-              // DisabilityCategory) tapi disembunyikan dari pilihan UI
-              // sampai fitur pendukungnya siap di Fase 2+, supaya tidak
-              // ada pilihan yang "nyala" tapi belum ada efeknya.
-              ..._implementedCategories.map(
-                (category) => Semantics(
-                  label: category.label,
-                  checked: profileController.selectedCategories
-                      .contains(category),
-                  child: CheckboxListTile(
-                    title: Text(category.label),
-                    value: profileController.selectedCategories
-                        .contains(category),
-                    onChanged: (_) =>
-                        profileController.toggleCategory(category),
-                  ),
+          child: CenteredContent(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Pilih kategori disabilitas Anda',
+                  style: textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Boleh pilih lebih dari satu. Sistem akan menyesuaikan '
+                  'tampilan dan fitur berdasarkan pilihan ini.',
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 20),
 
-              if (profileController.status == ProfileSaveStatus.error &&
-                  profileController.errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    profileController.errorMessage!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                // Hanya 3 kategori yang sudah punya efek nyata di fase ini.
+                for (final category in _implementedCategories)
+                  _CategoryTile(
+                    category: category,
+                    selected: profileController.selectedCategories
+                        .contains(category),
+                    onTap: () => profileController.toggleCategory(category),
                   ),
+
+                if (profileController.status == ProfileSaveStatus.error &&
+                    profileController.errorMessage != null) ...[
+                  const SizedBox(height: 4),
+                  ErrorBanner(message: profileController.errorMessage!),
+                ],
+
+                const SizedBox(height: 20),
+                AccessibleButton(
+                  label: 'Simpan Profil',
+                  isLoading:
+                      profileController.status == ProfileSaveStatus.saving,
+                  onPressed: _handleSave,
                 ),
               ],
-
-              const SizedBox(height: 24),
-              AccessibleButton(
-                label: 'Simpan Profil',
-                isLoading:
-                    profileController.status == ProfileSaveStatus.saving,
-                onPressed: () => _handleSave(context),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -109,4 +115,107 @@ class ProfilePage extends StatelessWidget {
     DisabilityCategory.runguWicara,
     DisabilityCategory.fisik,
   ];
+}
+
+class _CategoryTile extends StatelessWidget {
+  final DisabilityCategory category;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryTile({
+    required this.category,
+    required this.selected,
+    required this.onTap,
+  });
+
+  String get _description {
+    switch (category) {
+      case DisabilityCategory.netra:
+        return 'Tampilan kontras tinggi, teks besar, dan panduan suara.';
+      case DisabilityCategory.runguWicara:
+        return 'Teks dan notifikasi visual/getar sebagai pengganti suara.';
+      case DisabilityCategory.fisik:
+        return 'Tombol lebih besar dan informasi akses ramp/lift.';
+      default:
+        return '';
+    }
+  }
+
+  IconData get _icon {
+    switch (category) {
+      case DisabilityCategory.netra:
+        return Icons.visibility_off;
+      case DisabilityCategory.runguWicara:
+        return Icons.hearing_disabled;
+      case DisabilityCategory.fisik:
+        return Icons.accessible;
+      default:
+        return Icons.person;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Semantics(
+      checked: selected,
+      label: '${category.label}. $_description',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Material(
+          color: selected ? AppColors.surfaceTint : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: selected ? scheme.primary : AppColors.border,
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(_icon, size: 32, color: scheme.primary),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category.label,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _description,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    selected ? Icons.check_circle : Icons.circle_outlined,
+                    color: selected ? scheme.primary : AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

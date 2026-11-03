@@ -8,6 +8,7 @@ import 'controllers/profile_controller.dart';
 import 'controllers/registration_controller.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/auth/register_page.dart';
+import 'pages/auth/welcome_page.dart';
 import 'pages/navigation/campus_map_page.dart';
 import 'pages/profile/home_page.dart';
 import 'pages/profile/profile_page.dart';
@@ -36,8 +37,9 @@ class DifaPlusApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             // Tema otomatis mengikuti AccessibilityController (UI adaptif).
             theme: accessibility.currentTheme,
-            initialRoute: '/login',
+            initialRoute: '/welcome',
             routes: {
+              '/welcome': (_) => const WelcomePage(),
               '/login': (_) => const LoginPage(),
               '/register': (_) => const RegisterPage(),
               '/profile': (_) => const ProfilePage(),
