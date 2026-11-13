@@ -47,6 +47,20 @@ class UserAccount {
     this.phone,
   });
 
+  bool get hasPhone => phone != null && phone!.trim().isNotEmpty;
+
+  /// Salinan akun dengan nama / telepon yang diperbarui (dipakai saat edit profil).
+  UserAccount copyWith({String? fullName, String? phone}) {
+    return UserAccount(
+      uid: uid,
+      email: email,
+      fullName: fullName ?? this.fullName,
+      role: role,
+      createdAt: createdAt,
+      phone: phone ?? this.phone,
+    );
+  }
+
   /// createAccount() pada sequence diagram UC-01:
   /// dipanggil oleh RegistrationController setelah data tervalidasi.
   factory UserAccount.create({

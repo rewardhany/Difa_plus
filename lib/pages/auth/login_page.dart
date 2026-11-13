@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../controllers/accessibility_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/auth_flow.dart';
 import '../../core/widgets/accessible_button.dart';
 import '../../core/widgets/accessible_text_field.dart';
 import '../../core/widgets/centered_content.dart';
 import '../../core/widgets/difa_logo.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/social_button.dart';
 
 /// Boundary: LoginPage
-/// Merealisasikan UC-02 Login.
+/// Merealisasikan UC-02 Login (email/password dan Google).
 ///
 /// Setelah login valid, UC-02 memanggil UC-04 Load Accessibility
-/// Profile lewat <<include>>. Logic tidak berubah, hanya tampilan.
-/// "Ingat saya", "Lupa password?", dan login Google/Apple masih
-/// tampilan saja (belum ada fiturnya).
+/// Profile lewat <<include>> (lihat core/utils/auth_flow.dart).
+/// "Ingat saya", "Lupa password?", dan login Apple masih tampilan saja.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -27,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = true;
+  bool _googleLoading = false;
 
   @override
   void dispose() {
@@ -43,26 +44,44 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLogin() async {
     final authController = context.read<AuthController>();
-    final accessibilityController = context.read<AccessibilityController>();
-
     final success = await authController.login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
-
     if (!success || !mounted) return;
+    await goAfterAuth(context);
+  }
 
-    // <<include>> UC-04 Load Accessibility Profile
-    final uid = authController.sessionToken!.uid;
-    await accessibilityController.loadAccessibilityProfile(uid);
+  Future<void> _handleGoogle() async {
+    final auth = context.read<AuthController>();
+    setState(() => _googleLoading = true);
 
+    final result = await auth.signInWithGoogle();
     if (!mounted) return;
+    setState(() => _googleLoading = false);
 
-    // Decision "Status Profil Disabilitas?" pada Activity Diagram UC-04.
-    if (accessibilityController.needsProfileSetup) {
-      Navigator.of(context).pushReplacementNamed('/profile');
-    } else {
-      Navigator.of(context).pushReplacementNamed('/home');
+    switch (result) {
+      case GoogleAuthResult.cancelled:
+      case GoogleAuthResult.failed:
+        return; // pesan error (kalau ada) tampil lewat AuthController
+      case GoogleAuthResult.existingAccount:
+        await goAfterAuth(context, viaGoogle: true);
+        return;
+      case GoogleAuthResult.newAccount:
+        await goAfterAuth(context, viaGoogle: true, isNewAccount: true);
+        return;
+      case GoogleAuthResult.needsRole:
+        // Akun Google ini belum terdaftar: tanyakan peran dulu.
+        final role = await askRole(context);
+        if (!mounted) return;
+        if (role == null) {
+          await auth.logout();
+          return;
+        }
+        final ok = await auth.finishGoogleSignUp(role);
+        if (!ok || !mounted) return;
+        await goAfterAuth(context, viaGoogle: true, isNewAccount: true);
+        return;
     }
   }
 
@@ -135,8 +154,9 @@ class _LoginPageState extends State<LoginPage> {
                 ],
                 AccessibleButton(
                   label: 'Login',
-                  isLoading: controller.status == AuthStatus.loading,
-                  onPressed: _handleLogin,
+                  isLoading: controller.status == AuthStatus.loading &&
+                      !_googleLoading,
+                  onPressed: _googleLoading ? null : _handleLogin,
                 ),
                 const SizedBox(height: 20),
                 const Row(
@@ -153,20 +173,14 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _SocialButton(
+                SocialButton(
                   label: 'Login dengan Google',
-                  leading: const Text(
-                    'G',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF4285F4),
-                    ),
-                  ),
-                  onPressed: () => _notAvailable('Login dengan Google'),
+                  leading: const GoogleMark(),
+                  isLoading: _googleLoading,
+                  onPressed: _handleGoogle,
                 ),
                 const SizedBox(height: 12),
-                _SocialButton(
+                SocialButton(
                   label: 'Login dengan Apple',
                   leading: const Icon(Icons.apple, size: 22),
                   onPressed: () => _notAvailable('Login dengan Apple'),
@@ -187,38 +201,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final String label;
-  final Widget leading;
-  final VoidCallback onPressed;
-
-  const _SocialButton({
-    required this.label,
-    required this.leading,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        backgroundColor: Colors.white,
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          leading,
-          const SizedBox(width: 10),
-          Flexible(child: Text(label)),
-        ],
       ),
     );
   }

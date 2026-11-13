@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../controllers/auth_controller.dart';
 import '../../controllers/registration_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/auth_flow.dart';
 import '../../core/widgets/accessible_button.dart';
 import '../../core/widgets/accessible_text_field.dart';
 import '../../core/widgets/centered_content.dart';
 import '../../core/widgets/difa_logo.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/social_button.dart';
 import '../../models/disability_profile.dart';
 import '../../models/user_account.dart';
 
 /// Boundary: RegisterPage
 /// Merealisasikan UC-01 Register Account.
 ///
-/// Dipakai bersama oleh Mahasiswa dan Pendamping (actor "Pengguna"
-/// pada Sequence Diagram UC-01). Pilihan "Jenis Disabilitas" (opsional,
-/// hanya untuk Mahasiswa) menjadi pilihan awal di UC-03 setelah login.
+/// Semua kolom wajib diisi (pesan "wajib diisi" muncul per kolom).
+/// Khusus Mahasiswa, jenis disabilitas juga wajib. Alternatif: daftar
+/// dengan Google, lalu melengkapi profil di Beranda.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -24,6 +27,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _scroll = ScrollController();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -31,6 +35,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   UserRole _selectedRole = UserRole.mahasiswa;
   final Set<DisabilityCategory> _selectedCategories = {};
+  bool _googleLoading = false;
+  String? _googleError;
 
   static const _chipCategories = [
     DisabilityCategory.netra,
@@ -39,7 +45,17 @@ class _RegisterPageState extends State<RegisterPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Bersihkan sisa error dari kunjungan sebelumnya.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<RegistrationController>().clearAllErrors();
+    });
+  }
+
+  @override
   void dispose() {
+    _scroll.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -64,10 +80,12 @@ class _RegisterPageState extends State<RegisterPage> {
   // submitRegistrationForm() -> register(role, personalData)
   Future<void> _handleSubmit() async {
     final controller = context.read<RegistrationController>();
+    setState(() => _googleError = null);
+
     final success = await controller.register(
       role: _selectedRole,
       fullName: _nameController.text,
-      email: _emailController.text.trim(),
+      email: _emailController.text,
       phone: _phoneController.text,
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
@@ -76,12 +94,56 @@ class _RegisterPageState extends State<RegisterPage> {
           : const [],
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (!success && controller.fieldErrors.isNotEmpty && _scroll.hasClients) {
+      // Gulir ke kolom yang bermasalah (atas), atau ke chip kalau hanya itu.
+      final onlyCategories = controller.fieldErrors.length == 1 &&
+          controller.fieldErrors.containsKey('categories');
+      _scroll.animateTo(
+        onlyCategories ? _scroll.position.maxScrollExtent : 0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+      return;
+    }
+
+    if (success) {
       // showRegistrationConfirmation()
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registrasi berhasil. Silakan login.')),
       );
       Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  /// Daftar dengan Google: hanya nama + email yang terisi. No. telepon,
+  /// jenis disabilitas, dan password dilengkapi nanti lewat banner di Beranda.
+  Future<void> _handleGoogle() async {
+    final auth = context.read<AuthController>();
+    context.read<RegistrationController>().clearAllErrors();
+    setState(() {
+      _googleLoading = true;
+      _googleError = null;
+    });
+
+    final result = await auth.signInWithGoogle(roleIfNew: _selectedRole);
+    if (!mounted) return;
+    setState(() => _googleLoading = false);
+
+    switch (result) {
+      case GoogleAuthResult.cancelled:
+        return;
+      case GoogleAuthResult.failed:
+        setState(() => _googleError = auth.errorMessage);
+        return;
+      case GoogleAuthResult.existingAccount:
+        await goAfterAuth(context, viaGoogle: true);
+        return;
+      case GoogleAuthResult.newAccount:
+      case GoogleAuthResult.needsRole:
+        await goAfterAuth(context, viaGoogle: true, isNewAccount: true);
+        return;
     }
   }
 
@@ -94,7 +156,9 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<RegistrationController>();
+    final errors = controller.fieldErrors;
     final textTheme = Theme.of(context).textTheme;
+    final isMahasiswa = _selectedRole == UserRole.mahasiswa;
 
     return Scaffold(
       appBar: AppBar(
@@ -107,6 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scroll,
           child: CenteredContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -149,6 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     selected: {_selectedRole},
                     onSelectionChanged: (set) {
                       setState(() => _selectedRole = set.first);
+                      controller.clearAllErrors();
                     },
                   ),
                 ),
@@ -160,6 +226,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   hintText: 'Masukkan nama lengkap',
                   controller: _nameController,
                   prefixIcon: Icons.person_outline,
+                  errorText: errors['name'],
+                  onChanged: (_) => controller.clearFieldError('name'),
                 ),
                 const SizedBox(height: 16),
                 AccessibleTextField(
@@ -169,15 +237,19 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.mail_outline,
+                  errorText: errors['email'],
+                  onChanged: (_) => controller.clearFieldError('email'),
                 ),
                 const SizedBox(height: 16),
                 AccessibleTextField(
                   labelAbove: true,
-                  label: 'No. Telepon (opsional)',
+                  label: 'No. Telepon',
                   hintText: 'Masukkan nomor telepon',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone_outlined,
+                  errorText: errors['phone'],
+                  onChanged: (_) => controller.clearFieldError('phone'),
                 ),
                 const SizedBox(height: 16),
                 AccessibleTextField(
@@ -187,6 +259,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
+                  errorText: errors['password'],
+                  onChanged: (_) => controller.clearFieldError('password'),
                 ),
                 const SizedBox(height: 16),
                 AccessibleTextField(
@@ -196,25 +270,16 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _confirmPasswordController,
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
+                  errorText: errors['confirm'],
+                  onChanged: (_) => controller.clearFieldError('confirm'),
                 ),
 
-                if (_selectedRole == UserRole.mahasiswa) ...[
+                if (isMahasiswa) ...[
                   const SizedBox(height: 16),
-                  Text.rich(
-                    TextSpan(
-                      text: 'Jenis Disabilitas ',
-                      style: textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                      children: const [
-                        TextSpan(
-                          text: '(opsional)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                  Text(
+                    'Jenis Disabilitas',
+                    style: textTheme.labelLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -226,30 +291,79 @@ class _RegisterPageState extends State<RegisterPage> {
                           avatar: Icon(_iconFor(c), size: 18),
                           label: Text(c.label),
                           selected: _selectedCategories.contains(c),
-                          onSelected: (value) => setState(() {
-                            if (value) {
-                              _selectedCategories.add(c);
-                            } else {
-                              _selectedCategories.remove(c);
-                            }
-                          }),
+                          onSelected: (value) {
+                            setState(() {
+                              if (value) {
+                                _selectedCategories.add(c);
+                              } else {
+                                _selectedCategories.remove(c);
+                              }
+                            });
+                            controller.clearFieldError('categories');
+                          },
                         ),
                     ],
                   ),
+                  if (errors['categories'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 4),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          errors['categories']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
 
-                // showValidationError(errors) — Exception Flow
-                if (controller.status == RegistrationStatus.error &&
-                    controller.errorMessage != null) ...[
+                // Error umum (mis. dari Firebase) atau error Google
+                if (controller.errorMessage != null) ...[
                   const SizedBox(height: 12),
                   ErrorBanner(message: controller.errorMessage!),
+                ],
+                if (_googleError != null) ...[
+                  const SizedBox(height: 12),
+                  ErrorBanner(message: _googleError!),
                 ],
 
                 const SizedBox(height: 24),
                 AccessibleButton(
                   label: 'Daftar',
                   isLoading: controller.status == RegistrationStatus.loading,
-                  onPressed: _handleSubmit,
+                  onPressed: _googleLoading ? null : _handleSubmit,
+                ),
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'atau',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SocialButton(
+                  label: 'Daftar dengan Google',
+                  leading: const GoogleMark(),
+                  isLoading: _googleLoading,
+                  onPressed: _handleGoogle,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Dengan Google, nama dan email terisi otomatis. '
+                  'No. telepon, jenis disabilitas, dan password dilengkapi nanti di Beranda.',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Row(
