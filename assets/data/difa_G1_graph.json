@@ -1,0 +1,2012 @@
+{
+ "building": "G1",
+ "scale_m_per_px": null,
+ "floors": [
+  1,
+  2,
+  3,
+  4,
+  5
+ ],
+ "nodes": [
+  {
+   "id": "G1-L1-R_DRPL",
+   "name": "Ruang Dosen RPL",
+   "x": 535,
+   "y": 415,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_PRPL",
+   "name": "Ruang Prodi RPL",
+   "x": 592,
+   "y": 415,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_TL",
+   "name": "Simpang kiri-atas",
+   "x": 640,
+   "y": 415,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_TM",
+   "name": "Simpang tengah-atas",
+   "x": 880,
+   "y": 415,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_EMG",
+   "name": "Emergency",
+   "x": 955,
+   "y": 415,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_TOI",
+   "name": "Toilet",
+   "x": 1205,
+   "y": 415,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_TR",
+   "name": "Simpang kanan-atas",
+   "x": 1353,
+   "y": 415,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_KJS",
+   "name": "Ruang Kerjasama Kelembagaan",
+   "x": 1435,
+   "y": 415,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-E_SMP",
+   "name": "Pintu Samping (Ramp)",
+   "x": 1512,
+   "y": 415,
+   "type": "entrance",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_ML",
+   "name": "Simpang kiri-tengah",
+   "x": 640,
+   "y": 583,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-LIFT_L",
+   "name": "Lift kiri",
+   "x": 580,
+   "y": 583,
+   "type": "lift",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-STR_LB",
+   "name": "Tangga kiri",
+   "x": 580,
+   "y": 655,
+   "type": "stairs",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_MR",
+   "name": "Simpang kanan-tengah",
+   "x": 1353,
+   "y": 583,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-LIFT_R",
+   "name": "Lift kanan",
+   "x": 1385,
+   "y": 583,
+   "type": "lift",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-STR_RB",
+   "name": "Tangga kanan",
+   "x": 1385,
+   "y": 655,
+   "type": "stairs",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_BL",
+   "name": "Simpang kiri-bawah",
+   "x": 640,
+   "y": 720,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_DMM",
+   "name": "Ruang Dosen P. Multimedia",
+   "x": 530,
+   "y": 720,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_PMM",
+   "name": "Ruang Prodi P. Multimedia",
+   "x": 590,
+   "y": 720,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_BM",
+   "name": "Simpang tengah-bawah",
+   "x": 880,
+   "y": 720,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_BU",
+   "name": "Simpang depan pintu utama",
+   "x": 983,
+   "y": 720,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-E_UTM",
+   "name": "Pintu Utama (Tangga)",
+   "x": 983,
+   "y": 960,
+   "type": "entrance",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_BR",
+   "name": "Simpang kanan-bawah",
+   "x": 1353,
+   "y": 720,
+   "type": "junction",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_PTK",
+   "name": "Ruang Prodi Tekkom",
+   "x": 1378,
+   "y": 720,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-R_DTK",
+   "name": "Ruang Dosen Tekkom",
+   "x": 1438,
+   "y": 720,
+   "type": "room",
+   "floor": 1
+  },
+  {
+   "id": "G1-L2-R_KLS_KA",
+   "floor": 2,
+   "name": "Ruang Kelas (kiri atas)",
+   "x": 420,
+   "y": 410,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_LABRPL",
+   "floor": 2,
+   "name": "Ruang Lab RPL",
+   "x": 592,
+   "y": 410,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_EMG",
+   "floor": 2,
+   "name": "Emergency",
+   "x": 955,
+   "y": 410,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_TOI",
+   "floor": 2,
+   "name": "Toilet",
+   "x": 1205,
+   "y": 410,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_LABBHS",
+   "floor": 2,
+   "name": "Ruang Labkom Bahasa",
+   "x": 1540,
+   "y": 410,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_KLS_KB",
+   "floor": 2,
+   "name": "Ruang Kelas (kiri bawah)",
+   "x": 420,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_MICRO",
+   "floor": 2,
+   "name": "Ruang MicroTeaching",
+   "x": 685,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_PRODIPGSD",
+   "floor": 2,
+   "name": "Ruang Prodi Magister PGSD",
+   "x": 1150,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-R_DOSENPGSD",
+   "floor": 2,
+   "name": "Ruang Dosen Magister PGSD",
+   "x": 1545,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L2-J_TL",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 620,
+   "y": 410,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_TR",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 1355,
+   "y": 410,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_BL",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 620,
+   "y": 735,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_BR",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 1355,
+   "y": 735,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-LIFT_L",
+   "floor": 2,
+   "name": "Lift kiri",
+   "x": 590,
+   "y": 556,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L2-STR_LT",
+   "floor": 2,
+   "name": "Tangga kiri (atas di denah)",
+   "x": 590,
+   "y": 467,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L2-STR_LB",
+   "floor": 2,
+   "name": "Tangga kiri (bawah di denah)",
+   "x": 590,
+   "y": 645,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L2-J_LT",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 620,
+   "y": 467,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_LM",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 620,
+   "y": 556,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_LB",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 620,
+   "y": 645,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-LIFT_R",
+   "floor": 2,
+   "name": "Lift kanan",
+   "x": 1385,
+   "y": 574,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L2-STR_RT",
+   "floor": 2,
+   "name": "Tangga kanan (atas di denah)",
+   "x": 1385,
+   "y": 487,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L2-STR_RB",
+   "floor": 2,
+   "name": "Tangga kanan (bawah di denah)",
+   "x": 1385,
+   "y": 660,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L2-J_RT",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 1355,
+   "y": 487,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_RM",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 1355,
+   "y": 574,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L2-J_RB",
+   "floor": 2,
+   "name": "Simpang koridor",
+   "x": 1355,
+   "y": 660,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-R_LABPEND",
+   "floor": 3,
+   "name": "Labkom Pendidikan",
+   "x": 418,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_AV",
+   "floor": 3,
+   "name": "Ruang Audio Visual",
+   "x": 822,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_EMG",
+   "floor": 3,
+   "name": "Emergency",
+   "x": 962,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_TOI",
+   "floor": 3,
+   "name": "Toilet",
+   "x": 1215,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_SMART",
+   "floor": 3,
+   "name": "Smartclass",
+   "x": 1568,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_KLS_KB",
+   "floor": 3,
+   "name": "Ruang Kelas (kiri bawah)",
+   "x": 415,
+   "y": 740,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_MICRO",
+   "floor": 3,
+   "name": "Ruang MicroTeaching",
+   "x": 695,
+   "y": 740,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_LABNET",
+   "floor": 3,
+   "name": "Lab Network Embedded",
+   "x": 1165,
+   "y": 740,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-R_KLS_KNB",
+   "floor": 3,
+   "name": "Ruang Kelas (kanan bawah)",
+   "x": 1565,
+   "y": 740,
+   "type": "room"
+  },
+  {
+   "id": "G1-L3-J_TL",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 615,
+   "y": 430,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_TR",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 1380,
+   "y": 430,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_BL",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 615,
+   "y": 740,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_BR",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 1380,
+   "y": 740,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-LIFT_L",
+   "floor": 3,
+   "name": "Lift kiri",
+   "x": 580,
+   "y": 591,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L3-STR_LT",
+   "floor": 3,
+   "name": "Tangga kiri (atas di denah)",
+   "x": 580,
+   "y": 515,
+   "type": "stairs",
+   "label": "Tangga T"
+  },
+  {
+   "id": "G1-L3-STR_LB",
+   "floor": 3,
+   "name": "Tangga kiri (bawah di denah)",
+   "x": 580,
+   "y": 660,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L3-J_LT",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 615,
+   "y": 515,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_LM",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 615,
+   "y": 591,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_LB",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 615,
+   "y": 660,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-LIFT_R",
+   "floor": 3,
+   "name": "Lift kanan",
+   "x": 1408,
+   "y": 585,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L3-STR_RT",
+   "floor": 3,
+   "name": "Tangga kanan (atas di denah)",
+   "x": 1408,
+   "y": 515,
+   "type": "stairs",
+   "label": "Tangga T"
+  },
+  {
+   "id": "G1-L3-STR_RB",
+   "floor": 3,
+   "name": "Tangga kanan (bawah di denah)",
+   "x": 1408,
+   "y": 656,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L3-J_RT",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 1380,
+   "y": 515,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_RM",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 1380,
+   "y": 585,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L3-J_RB",
+   "floor": 3,
+   "name": "Simpang koridor",
+   "x": 1380,
+   "y": 656,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-R_KLS_KA",
+   "floor": 4,
+   "name": "Ruang Kelas (kiri atas)",
+   "x": 437,
+   "y": 425,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_AV",
+   "floor": 4,
+   "name": "Ruang Audio Visual",
+   "x": 836,
+   "y": 425,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_EMG",
+   "floor": 4,
+   "name": "Emergency",
+   "x": 978,
+   "y": 425,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_TOI",
+   "floor": 4,
+   "name": "Toilet",
+   "x": 1235,
+   "y": 425,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_KLS_KNA",
+   "floor": 4,
+   "name": "Ruang Kelas (kanan atas)",
+   "x": 1580,
+   "y": 425,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_PERPUS",
+   "floor": 4,
+   "name": "Perpustakaan",
+   "x": 440,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_KLS_TGH",
+   "floor": 4,
+   "name": "Ruang Kelas (bawah tengah-kanan)",
+   "x": 1180,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-R_KLS_KNB",
+   "floor": 4,
+   "name": "Ruang Kelas (kanan bawah)",
+   "x": 1580,
+   "y": 735,
+   "type": "room"
+  },
+  {
+   "id": "G1-L4-J_TL",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 630,
+   "y": 425,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_TR",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 425,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_BL",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 630,
+   "y": 735,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_BR",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 735,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-LIFT_L",
+   "floor": 4,
+   "name": "Lift kiri",
+   "x": 605,
+   "y": 572,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L4-STR_LT",
+   "floor": 4,
+   "name": "Tangga kiri (atas di denah)",
+   "x": 605,
+   "y": 483,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L4-STR_LB",
+   "floor": 4,
+   "name": "Tangga kiri (bawah di denah)",
+   "x": 605,
+   "y": 660,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L4-J_LT",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 630,
+   "y": 483,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_LM",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 630,
+   "y": 572,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_LB",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 630,
+   "y": 660,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-LIFT_R",
+   "floor": 4,
+   "name": "Lift kanan",
+   "x": 1412,
+   "y": 578,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L4-STR_RT",
+   "floor": 4,
+   "name": "Tangga kanan (atas di denah)",
+   "x": 1412,
+   "y": 484,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L4-STR_RB",
+   "floor": 4,
+   "name": "Tangga kanan (bawah di denah)",
+   "x": 1412,
+   "y": 660,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L4-J_RT",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 484,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_RM",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 578,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L4-J_RB",
+   "floor": 4,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 660,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-R_KLS_KA1",
+   "floor": 5,
+   "name": "Ruang Kelas (kiri atas 1)",
+   "x": 430,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_KA2",
+   "floor": 5,
+   "name": "Ruang Kelas (kiri atas 2)",
+   "x": 610,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_EMG",
+   "floor": 5,
+   "name": "Emergency",
+   "x": 970,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_TOI",
+   "floor": 5,
+   "name": "Toilet",
+   "x": 1215,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_KNA",
+   "floor": 5,
+   "name": "Ruang Kelas (kanan atas)",
+   "x": 1565,
+   "y": 430,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_KB1",
+   "floor": 5,
+   "name": "Ruang Kelas (kiri bawah)",
+   "x": 430,
+   "y": 730,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_BSR",
+   "floor": 5,
+   "name": "Ruang Kelas (besar, bawah)",
+   "x": 610,
+   "y": 730,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_BSR2",
+   "floor": 5,
+   "name": "Ruang Kelas (besar, bawah) pintu 2",
+   "x": 1110,
+   "y": 730,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_TGH",
+   "floor": 5,
+   "name": "Ruang Kelas (bawah tengah-kanan)",
+   "x": 1167,
+   "y": 730,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-R_KLS_KNB",
+   "floor": 5,
+   "name": "Ruang Kelas (kanan bawah)",
+   "x": 1565,
+   "y": 730,
+   "type": "room"
+  },
+  {
+   "id": "G1-L5-J_TL",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 625,
+   "y": 430,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_TR",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 430,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_BL",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 625,
+   "y": 730,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_BR",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 730,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-LIFT_L",
+   "floor": 5,
+   "name": "Lift kiri",
+   "x": 598,
+   "y": 570,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L5-STR_LT",
+   "floor": 5,
+   "name": "Tangga kiri (atas di denah)",
+   "x": 598,
+   "y": 490,
+   "type": "stairs",
+   "label": "Tangga T"
+  },
+  {
+   "id": "G1-L5-STR_LB",
+   "floor": 5,
+   "name": "Tangga kiri (bawah di denah)",
+   "x": 598,
+   "y": 650,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L5-J_LT",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 625,
+   "y": 490,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_LM",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 625,
+   "y": 570,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_LB",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 625,
+   "y": 650,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-LIFT_R",
+   "floor": 5,
+   "name": "Lift kanan",
+   "x": 1405,
+   "y": 572,
+   "type": "lift"
+  },
+  {
+   "id": "G1-L5-STR_RT",
+   "floor": 5,
+   "name": "Tangga kanan (atas di denah)",
+   "x": 1405,
+   "y": 492,
+   "type": "stairs",
+   "label": "Tangga T"
+  },
+  {
+   "id": "G1-L5-STR_RB",
+   "floor": 5,
+   "name": "Tangga kanan (bawah di denah)",
+   "x": 1405,
+   "y": 648,
+   "type": "stairs",
+   "label": "Tangga"
+  },
+  {
+   "id": "G1-L5-J_RT",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 492,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_RM",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 572,
+   "type": "junction"
+  },
+  {
+   "id": "G1-L5-J_RB",
+   "floor": 5,
+   "name": "Simpang koridor",
+   "x": 1385,
+   "y": 648,
+   "type": "junction"
+  }
+ ],
+ "edges": [
+  {
+   "from": "G1-L1-R_DRPL",
+   "to": "G1-L1-R_PRPL",
+   "length_px": 57,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_PRPL",
+   "to": "G1-L1-J_TL",
+   "length_px": 48,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TL",
+   "to": "G1-L1-J_TM",
+   "length_px": 240,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TM",
+   "to": "G1-L1-R_EMG",
+   "length_px": 75,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_EMG",
+   "to": "G1-L1-R_TOI",
+   "length_px": 250,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_TOI",
+   "to": "G1-L1-J_TR",
+   "length_px": 148,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TR",
+   "to": "G1-L1-R_KJS",
+   "length_px": 82,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_KJS",
+   "to": "G1-L1-E_SMP",
+   "length_px": 77,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TL",
+   "to": "G1-L1-J_ML",
+   "length_px": 168,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_ML",
+   "to": "G1-L1-J_BL",
+   "length_px": 137,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_ML",
+   "to": "G1-L1-LIFT_L",
+   "length_px": 60,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_ML",
+   "to": "G1-L1-STR_LB",
+   "length_px": 94,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TR",
+   "to": "G1-L1-J_MR",
+   "length_px": 168,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_MR",
+   "to": "G1-L1-J_BR",
+   "length_px": 137,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_MR",
+   "to": "G1-L1-LIFT_R",
+   "length_px": 32,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_MR",
+   "to": "G1-L1-STR_RB",
+   "length_px": 79,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_DMM",
+   "to": "G1-L1-R_PMM",
+   "length_px": 60,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_PMM",
+   "to": "G1-L1-J_BL",
+   "length_px": 50,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_BL",
+   "to": "G1-L1-J_BM",
+   "length_px": 240,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_BM",
+   "to": "G1-L1-J_BU",
+   "length_px": 103,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_BU",
+   "to": "G1-L1-J_BR",
+   "length_px": 370,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_BR",
+   "to": "G1-L1-R_PTK",
+   "length_px": 25,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-R_PTK",
+   "to": "G1-L1-R_DTK",
+   "length_px": 60,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_TM",
+   "to": "G1-L1-J_BM",
+   "length_px": 305,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_BU",
+   "to": "G1-L1-E_UTM",
+   "length_px": 240,
+   "type": "stairs",
+   "wheelchair": false
+  },
+  {
+   "from": "G1-L2-J_TL",
+   "to": "G1-L2-J_LT",
+   "length_px": 57,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LT",
+   "to": "G1-L2-J_LM",
+   "length_px": 89,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LM",
+   "to": "G1-L2-J_LB",
+   "length_px": 89,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LB",
+   "to": "G1-L2-J_BL",
+   "length_px": 90,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LM",
+   "to": "G1-L2-LIFT_L",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LT",
+   "to": "G1-L2-STR_LT",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_LB",
+   "to": "G1-L2-STR_LB",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_TR",
+   "to": "G1-L2-J_RT",
+   "length_px": 77,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RT",
+   "to": "G1-L2-J_RM",
+   "length_px": 87,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RM",
+   "to": "G1-L2-J_RB",
+   "length_px": 86,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RB",
+   "to": "G1-L2-J_BR",
+   "length_px": 75,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RM",
+   "to": "G1-L2-LIFT_R",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RT",
+   "to": "G1-L2-STR_RT",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_RB",
+   "to": "G1-L2-STR_RB",
+   "length_px": 30,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_KLS_KA",
+   "to": "G1-L2-R_LABRPL",
+   "length_px": 172,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_LABRPL",
+   "to": "G1-L2-J_TL",
+   "length_px": 28,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_TL",
+   "to": "G1-L2-R_EMG",
+   "length_px": 335,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_EMG",
+   "to": "G1-L2-R_TOI",
+   "length_px": 250,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_TOI",
+   "to": "G1-L2-J_TR",
+   "length_px": 150,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_TR",
+   "to": "G1-L2-R_LABBHS",
+   "length_px": 185,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_KLS_KB",
+   "to": "G1-L2-J_BL",
+   "length_px": 200,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_BL",
+   "to": "G1-L2-R_MICRO",
+   "length_px": 65,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_MICRO",
+   "to": "G1-L2-R_PRODIPGSD",
+   "length_px": 465,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-R_PRODIPGSD",
+   "to": "G1-L2-J_BR",
+   "length_px": 205,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L2-J_BR",
+   "to": "G1-L2-R_DOSENPGSD",
+   "length_px": 190,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_TL",
+   "to": "G1-L3-J_LT",
+   "length_px": 85,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LT",
+   "to": "G1-L3-J_LM",
+   "length_px": 76,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LM",
+   "to": "G1-L3-J_LB",
+   "length_px": 69,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LB",
+   "to": "G1-L3-J_BL",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LM",
+   "to": "G1-L3-LIFT_L",
+   "length_px": 35,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LT",
+   "to": "G1-L3-STR_LT",
+   "length_px": 35,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_LB",
+   "to": "G1-L3-STR_LB",
+   "length_px": 35,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_TR",
+   "to": "G1-L3-J_RT",
+   "length_px": 85,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RT",
+   "to": "G1-L3-J_RM",
+   "length_px": 70,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RM",
+   "to": "G1-L3-J_RB",
+   "length_px": 71,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RB",
+   "to": "G1-L3-J_BR",
+   "length_px": 84,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RM",
+   "to": "G1-L3-LIFT_R",
+   "length_px": 28,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RT",
+   "to": "G1-L3-STR_RT",
+   "length_px": 28,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_RB",
+   "to": "G1-L3-STR_RB",
+   "length_px": 28,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_LABPEND",
+   "to": "G1-L3-J_TL",
+   "length_px": 197,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_TL",
+   "to": "G1-L3-R_AV",
+   "length_px": 207,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_AV",
+   "to": "G1-L3-R_EMG",
+   "length_px": 140,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_EMG",
+   "to": "G1-L3-R_TOI",
+   "length_px": 253,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_TOI",
+   "to": "G1-L3-J_TR",
+   "length_px": 165,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_TR",
+   "to": "G1-L3-R_SMART",
+   "length_px": 188,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_KLS_KB",
+   "to": "G1-L3-J_BL",
+   "length_px": 200,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_BL",
+   "to": "G1-L3-R_MICRO",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_MICRO",
+   "to": "G1-L3-R_LABNET",
+   "length_px": 470,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-R_LABNET",
+   "to": "G1-L3-J_BR",
+   "length_px": 215,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L3-J_BR",
+   "to": "G1-L3-R_KLS_KNB",
+   "length_px": 185,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_TL",
+   "to": "G1-L4-J_LT",
+   "length_px": 58,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LT",
+   "to": "G1-L4-J_LM",
+   "length_px": 89,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LM",
+   "to": "G1-L4-J_LB",
+   "length_px": 88,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LB",
+   "to": "G1-L4-J_BL",
+   "length_px": 75,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LM",
+   "to": "G1-L4-LIFT_L",
+   "length_px": 25,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LT",
+   "to": "G1-L4-STR_LT",
+   "length_px": 25,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_LB",
+   "to": "G1-L4-STR_LB",
+   "length_px": 25,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_TR",
+   "to": "G1-L4-J_RT",
+   "length_px": 59,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RT",
+   "to": "G1-L4-J_RM",
+   "length_px": 94,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RM",
+   "to": "G1-L4-J_RB",
+   "length_px": 82,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RB",
+   "to": "G1-L4-J_BR",
+   "length_px": 75,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RM",
+   "to": "G1-L4-LIFT_R",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RT",
+   "to": "G1-L4-STR_RT",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_RB",
+   "to": "G1-L4-STR_RB",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_KLS_KA",
+   "to": "G1-L4-J_TL",
+   "length_px": 193,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_TL",
+   "to": "G1-L4-R_AV",
+   "length_px": 206,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_AV",
+   "to": "G1-L4-R_EMG",
+   "length_px": 142,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_EMG",
+   "to": "G1-L4-R_TOI",
+   "length_px": 257,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_TOI",
+   "to": "G1-L4-J_TR",
+   "length_px": 150,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_TR",
+   "to": "G1-L4-R_KLS_KNA",
+   "length_px": 195,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_PERPUS",
+   "to": "G1-L4-J_BL",
+   "length_px": 190,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_BL",
+   "to": "G1-L4-R_KLS_TGH",
+   "length_px": 550,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-R_KLS_TGH",
+   "to": "G1-L4-J_BR",
+   "length_px": 205,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L4-J_BR",
+   "to": "G1-L4-R_KLS_KNB",
+   "length_px": 195,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_TL",
+   "to": "G1-L5-J_LT",
+   "length_px": 60,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LT",
+   "to": "G1-L5-J_LM",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LM",
+   "to": "G1-L5-J_LB",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LB",
+   "to": "G1-L5-J_BL",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LM",
+   "to": "G1-L5-LIFT_L",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LT",
+   "to": "G1-L5-STR_LT",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_LB",
+   "to": "G1-L5-STR_LB",
+   "length_px": 27,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_TR",
+   "to": "G1-L5-J_RT",
+   "length_px": 62,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RT",
+   "to": "G1-L5-J_RM",
+   "length_px": 80,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RM",
+   "to": "G1-L5-J_RB",
+   "length_px": 76,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RB",
+   "to": "G1-L5-J_BR",
+   "length_px": 82,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RM",
+   "to": "G1-L5-LIFT_R",
+   "length_px": 20,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RT",
+   "to": "G1-L5-STR_RT",
+   "length_px": 20,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_RB",
+   "to": "G1-L5-STR_RB",
+   "length_px": 20,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_KA1",
+   "to": "G1-L5-R_KLS_KA2",
+   "length_px": 180,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_KA2",
+   "to": "G1-L5-J_TL",
+   "length_px": 15,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_TL",
+   "to": "G1-L5-R_EMG",
+   "length_px": 345,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_EMG",
+   "to": "G1-L5-R_TOI",
+   "length_px": 245,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_TOI",
+   "to": "G1-L5-J_TR",
+   "length_px": 170,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_TR",
+   "to": "G1-L5-R_KLS_KNA",
+   "length_px": 180,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_KB1",
+   "to": "G1-L5-R_KLS_BSR",
+   "length_px": 180,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_BSR",
+   "to": "G1-L5-J_BL",
+   "length_px": 15,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_BL",
+   "to": "G1-L5-R_KLS_BSR2",
+   "length_px": 485,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_BSR2",
+   "to": "G1-L5-R_KLS_TGH",
+   "length_px": 57,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-R_KLS_TGH",
+   "to": "G1-L5-J_BR",
+   "length_px": 218,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L5-J_BR",
+   "to": "G1-L5-R_KLS_KNB",
+   "length_px": 180,
+   "type": "corridor",
+   "wheelchair": true
+  }
+ ],
+ "interfloor_edges": [
+  {
+   "from": "G1-L1-LIFT_L",
+   "to": "G1-L2-LIFT_L",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L2-LIFT_L",
+   "to": "G1-L3-LIFT_L",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L3-LIFT_L",
+   "to": "G1-L4-LIFT_L",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L4-LIFT_L",
+   "to": "G1-L5-LIFT_L",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L1-STR_LB",
+   "to": "G1-L2-STR_LB",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L3-STR_LB",
+   "to": "G1-L4-STR_LB",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L2-STR_LT",
+   "to": "G1-L3-STR_LT",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L4-STR_LT",
+   "to": "G1-L5-STR_LT",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L1-LIFT_R",
+   "to": "G1-L2-LIFT_R",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L2-LIFT_R",
+   "to": "G1-L3-LIFT_R",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L3-LIFT_R",
+   "to": "G1-L4-LIFT_R",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L4-LIFT_R",
+   "to": "G1-L5-LIFT_R",
+   "type": "lift",
+   "wheelchair": true,
+   "cost_px": 80
+  },
+  {
+   "from": "G1-L1-STR_RB",
+   "to": "G1-L2-STR_RB",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L3-STR_RB",
+   "to": "G1-L4-STR_RB",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L2-STR_RT",
+   "to": "G1-L3-STR_RT",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  },
+  {
+   "from": "G1-L4-STR_RT",
+   "to": "G1-L5-STR_RT",
+   "type": "stairs",
+   "wheelchair": false,
+   "cost_px": 120
+  }
+ ]
+}

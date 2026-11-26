@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/accessible_button.dart';
 import '../../core/widgets/accessible_text_field.dart';
 import '../../models/campus_map.dart';
+import '../../models/campus_route.dart';
 
 /// Boundary: CampusMapPage
 /// Merealisasikan UC-05 Show Campus Maps.
@@ -39,24 +40,46 @@ class _CampusMapPageState extends State<CampusMapPage> {
     super.dispose();
   }
 
-  bool get _isNetra =>
+    bool get _isNetra =>
       context.read<AccessibilityController>().profile?.isNetra ?? false;
+
+  bool get _isFisik =>
+      context.read<AccessibilityController>().profile?.isFisik ?? false;
 
   /// openCampusMapMenu() -> MapController.showCampusMap()
   Future<void> openCampusMapMenu() async {
     final controller = context.read<MapController>();
     final isNetra = _isNetra;
+    final isFisik = _isFisik;
     _searchController.clear();
     await controller.showCampusMap();
-    if (!mounted || !isNetra) return;
+    if (!mounted) return;
+    controller.ensureDefaultStart(wheelchairOnly: isFisik);
+    if (!isNetra) return;
 
     TtsService.instance.speak(
       controller.status == MapLoadStatus.loaded
-          ? 'Peta kampus dimuat. ${controller.visibleLocations.length} lokasi tersedia. Pilih lokasi dari daftar.'
+          ? 'Peta Gedung G1 dimuat, 5 lantai tersedia. Pilih lokasi dari daftar.'
           : 'Peta kampus gagal dimuat. Tekan tombol coba lagi.',
     );
   }
 
+  /// UC-06: Hitung rute lalu umumkan ringkasan suara jika mode Netra.
+  void _handleCalculateRoute(MapController controller, bool isFisik) {
+    controller.ensureDefaultStart(wheelchairOnly: isFisik);
+    final ok = controller.calculateRoute(wheelchairOnly: isFisik);
+    if (!_isNetra) return;
+    if (ok && controller.activeRoute != null) {
+      final route = controller.activeRoute!;
+      final ringkasan = route.steps.map((s) => s.instruction).join(' ');
+      TtsService.instance.speak(
+        'Rute ditemukan, jarak sekitar ${route.totalDistanceMeters.round()} meter. $ringkasan',
+      );
+    } else if (controller.routeError != null) {
+      TtsService.instance.speak(controller.routeError!);
+    }
+  }
+  
   /// selectLocation(locationId) -> MapController.setSelectedLocation()
   void selectLocation(CampusLocation location) {
     context.read<MapController>().setSelectedLocation(location.id);
@@ -66,8 +89,9 @@ class _CampusMapPageState extends State<CampusMapPage> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MapController>();
-    final isNetra =
-        context.watch<AccessibilityController>().profile?.isNetra ?? false;
+    final profile = context.watch<AccessibilityController>().profile;
+    final isNetra = profile?.isNetra ?? false;
+    final isFisik = profile?.isFisik ?? false;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Peta Kampus')),
@@ -76,14 +100,14 @@ class _CampusMapPageState extends State<CampusMapPage> {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
-            child: _buildBody(controller, isNetra),
+            child: _buildBody(controller, isNetra, isFisik),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBody(MapController controller, bool isNetra) {
+  Widget _buildBody(MapController controller, bool isNetra, bool isFisik) {
     switch (controller.status) {
       case MapLoadStatus.idle:
       case MapLoadStatus.loading:
@@ -96,7 +120,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
       case MapLoadStatus.error:
         return _displayMapRequestError();
       case MapLoadStatus.loaded:
-        return _displayAccessibleCampusMap(controller, isNetra);
+        return _displayAccessibleCampusMap(controller, isNetra, isFisik);
     }
   }
 
@@ -129,14 +153,19 @@ class _CampusMapPageState extends State<CampusMapPage> {
   }
 
   /// displayAccessibleCampusMap(accessibleMap)
-  Widget _displayAccessibleCampusMap(MapController controller, bool isNetra) {
+  /// displayAccessibleCampusMap(accessibleMap)
+  Widget _displayAccessibleCampusMap(
+    MapController controller,
+    bool isNetra,
+    bool isFisik,
+  ) {
     final locations = controller.visibleLocations;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         AccessibleTextField(
-          label: 'Cari lokasi',
+          label: 'Cari ruangan atau lantai',
           controller: _searchController,
           prefixIcon: Icons.search,
           onChanged: controller.setSearchQuery,
@@ -144,14 +173,19 @@ class _CampusMapPageState extends State<CampusMapPage> {
         const SizedBox(height: 12),
         _buildFilters(controller),
         const SizedBox(height: 12),
+        _buildFloorSelector(controller),
+        const SizedBox(height: 12),
         if (!isNetra) ...[
           _buildVisualMap(controller),
           const SizedBox(height: 12),
         ],
-        _buildSelectedCard(controller),
+        _buildRouteCard(controller, isFisik),
+        _buildSelectedCard(controller, isFisik),
         const SizedBox(height: 8),
         Text(
-          'Daftar Lokasi (${locations.length})',
+          controller.searchQuery.isEmpty && controller.activeFilters.isEmpty
+              ? 'Daftar Lokasi Lantai ${controller.activeFloor} (${locations.length})'
+              : 'Hasil Pencarian (${locations.length})',
           style: Theme.of(context)
               .textTheme
               .titleMedium
@@ -165,6 +199,28 @@ class _CampusMapPageState extends State<CampusMapPage> {
           ),
         for (final location in locations) _buildLocationTile(controller, location),
       ],
+    );
+  }
+
+  /// Pemilih Lantai 1 - 5 (menandai lantai yang dilewati rute aktif).
+  Widget _buildFloorSelector(MapController controller) {
+    final routeFloors = controller.activeRoute?.floorsInvolved ?? const <int>[];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final floor in controller.floors) ...[
+            ChoiceChip(
+              label: Text(
+                routeFloors.contains(floor) ? 'Lt $floor •' : 'Lt $floor',
+              ),
+              selected: controller.activeFloor == floor,
+              onSelected: (_) => controller.setFloor(floor),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 
@@ -230,88 +286,321 @@ class _CampusMapPageState extends State<CampusMapPage> {
     );
   }
 
+  /// Denah PNG asli (2000x1125) + garis rute CustomPaint + pin ruangan.
   Widget _buildVisualMap(MapController controller) {
     final scheme = Theme.of(context).colorScheme;
-    final selectedId = controller.campusMap?.selectedLocationId;
+    final selectedId = controller.selectedLocation?.id;
+    final startId = controller.startLocationId;
+    final route = controller.activeRoute;
+    final floor = controller.activeFloor;
+    final pins = controller.floorLocations;
 
-    return AspectRatio(
-      aspectRatio: 4 / 3,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(
-          builder: (context, box) {
-            const markerWidth = 70.0;
-            const markerHeight = 62.0;
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _GridPainter(AppColors.border.withAlpha(120)),
-                  ),
-                ),
-                for (final location in controller.visibleLocations)
-                  Positioned(
-                    left: location.x * (box.maxWidth - markerWidth),
-                    top: location.y * (box.maxHeight - markerHeight),
-                    child: Semantics(
-                      button: true,
-                      selected: location.id == selectedId,
-                      label: location.name,
-                      child: GestureDetector(
-                        onTap: () => selectLocation(location),
-                        child: SizedBox(
-                          width: markerWidth,
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: location.id == selectedId
-                                      ? scheme.primary
-                                      : Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: scheme.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.place,
-                                  size: 22,
-                                  color: location.id == selectedId
-                                      ? Colors.white
-                                      : scheme.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                location.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          AspectRatio(
+            aspectRatio: CampusMap.canvasWidth / CampusMap.canvasHeight,
+            child: InteractiveViewer(
+              minScale: 1.0,
+              maxScale: 4.0,
+              child: LayoutBuilder(
+                builder: (context, box) {
+                  return Stack(
+                    children: [
+                      // Lapis 1: Gambar denah murni per lantai
+                      Positioned.fill(
+                        child: Image.asset(
+                          'assets/maps/lantai_$floor.png',
+                          fit: BoxFit.fill,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'Gambar assets/maps/lantai_$floor.png belum ditemukan.',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 10),
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      // Lapis 2: Garis jalur rute untuk lantai aktif
+                      if (route != null)
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _RouteOverlayPainter(
+                              route: route,
+                              activeFloor: floor,
+                              lineColor: scheme.primary,
+                            ),
+                          ),
+                        ),
+                      // Lapis 3: Pin lokasi pada lantai aktif
+                      for (final location in pins)
+                        _buildPin(
+                          location: location,
+                          box: box,
+                          isStart: location.id == startId && route != null,
+                          isEnd: location.id == selectedId,
+                          primaryColor: scheme.primary,
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            color: AppColors.surfaceTint,
+            child: Text(
+              'Lantai $floor • Cubit untuk memperbesar, ketuk titik ruangan untuk memilih',
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPin({
+    required CampusLocation location,
+    required BoxConstraints box,
+    required bool isStart,
+    required bool isEnd,
+    required Color primaryColor,
+  }) {
+    final bool highlight = isStart || isEnd;
+    final double dotSize = highlight ? 18 : 12;
+    final Color fillColor = isStart
+        ? const Color(0xFF16A34A) // Hijau = Titik Awal
+        : isEnd
+            ? const Color(0xFFDC2626) // Merah = Tujuan / Terpilih
+            : location.type == 'lift'
+                ? const Color(0xFF7C3AED) // Ungu = Lift
+                : location.type == 'stairs'
+                    ? const Color(0xFFEA580C) // Oranye = Tangga
+                    : primaryColor;
+
+    return Positioned(
+      left: location.x * box.maxWidth - (dotSize / 2),
+      top: location.y * box.maxHeight - (dotSize / 2),
+      child: Semantics(
+        button: true,
+        selected: isEnd,
+        label: '${location.name}, lantai ${location.floor}',
+        child: Tooltip(
+          message: location.name,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => selectLocation(location),
+            child: Container(
+              width: dotSize,
+              height: dotSize,
+              decoration: BoxDecoration(
+                color: fillColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: highlight ? 2.5 : 1.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x44000000),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
                   ),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSelectedCard(MapController controller) {
+  /// UC-06: Panel pilih Titik Awal & Tujuan + Daftar Teks Rute.
+  Widget _buildRouteCard(MapController controller, bool isFisik) {
+    final allLocs = controller.allLocations;
+    if (allLocs.isEmpty) return const SizedBox.shrink();
+
+    final route = controller.activeRoute;
+    final startId = controller.startLocationId;
+    final endId = controller.selectedLocation?.id;
+
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.directions, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Navigasi Rute',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (isFisik)
+                  const Chip(
+                    label: Text('Ramah Kursi Roda', style: TextStyle(fontSize: 11)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildLocationDropdown(
+              label: 'Titik Awal',
+              value: allLocs.any((l) => l.id == startId) ? startId : null,
+              locations: allLocs,
+              onChanged: controller.setStartLocation,
+            ),
+            const SizedBox(height: 10),
+            _buildLocationDropdown(
+              label: 'Tujuan',
+              value: allLocs.any((l) => l.id == endId) ? endId : null,
+              locations: allLocs,
+              onChanged: (id) {
+                if (id != null) controller.setSelectedLocation(id);
+              },
+            ),
+            if (controller.routeError != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                controller.routeError!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: AccessibleButton(
+                    label: 'Cari Rute',
+                    icon: Icons.alt_route,
+                    onPressed: () => _handleCalculateRoute(controller, isFisik),
+                  ),
+                ),
+                if (route != null) ...[
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    tooltip: 'Hapus rute',
+                    icon: const Icon(Icons.close),
+                    onPressed: controller.clearRoute,
+                  ),
+                ],
+              ],
+            ),
+            if (route != null) ...[
+              const Divider(height: 24),
+              Text(
+                'Estimasi jarak: ~${route.totalDistanceMeters.round()} meter • '
+                'Melewati Lantai ${route.floorsInvolved.join(', ')}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (int i = 0; i < route.steps.length; i++)
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => controller.setFloor(
+                    route.steps[i].targetFloor ?? route.steps[i].floor,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 11,
+                          backgroundColor: route.steps[i].isFloorChange
+                              ? const Color(0xFF7C3AED)
+                              : AppColors.surfaceTint,
+                          child: Text(
+                            '${i + 1}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: route.steps[i].isFloorChange
+                                  ? Colors.white
+                                  : AppColors.primaryDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(route.steps[i].instruction),
+                        ),
+                        Text(
+                          'Lt ${route.steps[i].floor}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationDropdown({
+    required String label,
+    required String? value,
+    required List<CampusLocation> locations,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          hint: Text('Pilih $label'),
+          items: [
+            for (final loc in locations)
+              DropdownMenuItem(
+                value: loc.id,
+                child: Text(
+                  'Lt ${loc.floor} • ${loc.name}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedCard(MapController controller, bool isFisik) {
     final location = controller.selectedLocation;
     if (location == null) return const SizedBox.shrink();
 
@@ -341,6 +630,7 @@ class _CampusMapPageState extends State<CampusMapPage> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 6,
               children: [
                 if (location.hasRamp) const Chip(label: Text('Ramp')),
                 if (location.hasLift) const Chip(label: Text('Lift')),
@@ -351,11 +641,10 @@ class _CampusMapPageState extends State<CampusMapPage> {
               ],
             ),
             const SizedBox(height: 12),
-            // UC-06 Get Campus Route dibangun di update berikutnya.
-            const AccessibleButton(
-              label: 'Tentukan Rute (segera hadir)',
+            AccessibleButton(
+              label: 'Tentukan Rute ke Sini',
               icon: Icons.directions,
-              onPressed: null,
+              onPressed: () => _handleCalculateRoute(controller, isFisik),
             ),
           ],
         ),
@@ -364,26 +653,72 @@ class _CampusMapPageState extends State<CampusMapPage> {
   }
 }
 
-class _GridPainter extends CustomPainter {
-  final Color color;
+/// Menggambar garis rute di atas gambar denah PNG khusus untuk lantai aktif.
+class _RouteOverlayPainter extends CustomPainter {
+  final CampusRoute route;
+  final int activeFloor;
+  final Color lineColor;
 
-  const _GridPainter(this.color);
+  const _RouteOverlayPainter({
+    required this.route,
+    required this.activeFloor,
+    required this.lineColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    const step = 32.0;
-    for (double x = step; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    final corridorPaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    final stairsPaint = Paint()
+      ..color = const Color(0xFFEA580C)
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < route.edges.length; i++) {
+      final a = route.path[i];
+      final b = route.path[i + 1];
+      if (a.floor != activeFloor || b.floor != activeFloor) continue;
+
+      final p1 = Offset(a.x * size.width, a.y * size.height);
+      final p2 = Offset(b.x * size.width, b.y * size.height);
+      final paint =
+          route.edges[i].type == 'stairs' ? stairsPaint : corridorPaint;
+
+      canvas.drawLine(p1, p2, paint);
     }
-    for (double y = step; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+
+    // Lingkaran penanda titik pindah lantai (Lift/Tangga) di lantai aktif
+    final transferFill = Paint()..color = const Color(0xFF7C3AED);
+    final transferBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < route.edges.length; i++) {
+      final a = route.path[i];
+      final b = route.path[i + 1];
+      if (a.floor == b.floor) continue;
+
+      final nodeOnFloor =
+          a.floor == activeFloor ? a : (b.floor == activeFloor ? b : null);
+      if (nodeOnFloor == null) continue;
+
+      final center =
+          Offset(nodeOnFloor.x * size.width, nodeOnFloor.y * size.height);
+      canvas.drawCircle(center, 9, transferFill);
+      canvas.drawCircle(center, 9, transferBorder);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant _RouteOverlayPainter oldDelegate) =>
+      oldDelegate.route != route ||
+      oldDelegate.activeFloor != activeFloor ||
+      oldDelegate.lineColor != lineColor;
 }

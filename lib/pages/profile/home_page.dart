@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
                 icon: Icons.alt_route,
                 label: 'Rute',
                 color: const Color(0xFF0D9488),
-                onTap: () => _comingSoon('Rute & Navigasi'),
+                onTap: _openMap,
               ),
               _QuickAction(
                 icon: Icons.auto_awesome,
