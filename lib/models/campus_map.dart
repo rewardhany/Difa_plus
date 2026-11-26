@@ -6,9 +6,12 @@
 /// (saveSelectedLocation) supaya bisa dipakai UC-06 lewat <<include>>.
 library;
 
+import 'dart:math' as math;
+
 class CampusLocation {
   final String id;
   final String name;
+  final String shortName;
   final String building;
   final int floor;
 
@@ -33,6 +36,7 @@ class CampusLocation {
   const CampusLocation({
     required this.id,
     required this.name,
+    String? shortName,
     required this.building,
     required this.floor,
     this.type = 'room',
@@ -44,7 +48,12 @@ class CampusLocation {
     this.hasRamp = false,
     this.hasLift = false,
     this.hasAccessibleToilet = false,
-  });
+  }) : shortName = shortName ?? name;
+
+  bool get isRoom => type == 'room';
+  bool get isEntrance => type == 'entrance';
+  bool get isTransfer => type == 'lift' || type == 'stairs';
+  bool get isJunction => type == 'junction';
 
   /// Ramah kursi roda jika bukan tangga dan bukan Pintu Utama (Tangga).
   bool get isWheelchairAccessible => type != 'stairs' && id != 'G1-L1-E_UTM';
@@ -54,9 +63,12 @@ class CampusLocation {
     String defaultBuilding = 'Gedung G1',
     double canvasWidth = CampusMap.canvasWidth,
     double canvasHeight = CampusMap.canvasHeight,
+    bool floorHasLift = false,
+    bool floorHasRamp = false,
   }) {
     final id = map['id'] as String;
     final name = map['name'] as String? ?? 'Lokasi';
+    final shortName = (map['short_name'] as String?)?.trim();
     final building = map['building'] as String? ?? defaultBuilding;
     final floor = (map['floor'] as num?)?.toInt() ?? 1;
     final type = map['type'] as String? ?? 'room';
@@ -71,13 +83,17 @@ class CampusLocation {
     final normY = isPixel ? (rawY / canvasHeight) : rawY;
 
     final lowerName = name.toLowerCase();
+    final wheelchairOk = type != 'stairs' && id != 'G1-L1-E_UTM';
+
     final hasRamp = (map['hasRamp'] as bool?) ??
-        (lowerName.contains('ramp') || id == 'G1-L1-E_SMP');
-    final hasLift = (map['hasLift'] as bool?) ?? (type == 'lift');
+        (lowerName.contains('ramp') ||
+            id == 'G1-L1-E_SMP' ||
+            (type == 'room' && floorHasRamp && wheelchairOk));
+    final hasLift = (map['hasLift'] as bool?) ??
+        (type == 'lift' || (type == 'room' && floorHasLift && wheelchairOk));
     final hasAccessibleToilet = (map['hasAccessibleToilet'] as bool?) ??
         lowerName.contains('toilet');
 
-    final wheelchairOk = type != 'stairs' && id != 'G1-L1-E_UTM';
     final defaultDesc = _buildAudioDescription(
       name: name,
       building: building,
@@ -89,6 +105,7 @@ class CampusLocation {
     return CampusLocation(
       id: id,
       name: name,
+      shortName: (shortName != null && shortName.isNotEmpty) ? shortName : name,
       building: building,
       floor: floor,
       type: type,
@@ -162,11 +179,14 @@ class CampusMap {
   final List<int> floors;
   final double? scaleMetersPerPx;
 
-  /// Semua node termasuk junction (dipakai oleh algoritma Dijkstra).
+  /// Semua node termasuk junction, lift, tangga (dipakai oleh algoritma Dijkstra).
   final List<CampusLocation> allNodes;
 
-  /// Lokasi yang tampil di daftar & peta (tanpa junction simpang koridor).
+  /// Daftar ruangan tujuan (hanya type == 'room', tanpa lift/tangga/junction).
   final List<CampusLocation> locations;
+
+  /// Daftar lokasi awal yang valid: Pintu Masuk (entrance) + Ruangan (room).
+  final List<CampusLocation> startLocations;
 
   /// Gabungan edges koridor + interfloor_edges (lift & tangga).
   final List<CampusEdge> edges;
@@ -180,9 +200,11 @@ class CampusMap {
     this.floors = const [1, 2, 3, 4, 5],
     this.scaleMetersPerPx,
     List<CampusLocation>? allNodes,
+    List<CampusLocation>? startLocations,
     this.edges = const [],
     this.selectedLocationId,
   })  : allNodes = allNodes ?? locations,
+        startLocations = startLocations ?? locations,
         _nodeIndex = {
           for (final n in (allNodes ?? locations)) n.id: n,
         };
@@ -197,17 +219,44 @@ class CampusMap {
     final rawNodes = (mapData['nodes'] as List<dynamic>?) ??
         (mapData['locations'] as List<dynamic>?) ??
         const [];
-    final allNodes = rawNodes
+    final rawNodeMaps = rawNodes
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+
+    // Deteksi lantai mana saja yang memiliki lift dan akses ramp.
+    final floorsWithLift = <int>{};
+    final floorsWithRamp = <int>{};
+    for (final m in rawNodeMaps) {
+      final floor = (m['floor'] as num?)?.toInt() ?? 1;
+      final type = m['type'] as String? ?? 'room';
+      final id = m['id'] as String? ?? '';
+      final name = (m['name'] as String? ?? '').toLowerCase();
+      if (type == 'lift') floorsWithLift.add(floor);
+      if (id == 'G1-L1-E_SMP' || name.contains('ramp')) {
+        floorsWithRamp.add(floor);
+      }
+    }
+
+    final allNodes = rawNodeMaps
         .map(
-          (e) => CampusLocation.fromMap(
-            Map<String, dynamic>.from(e as Map),
-            defaultBuilding: buildingName,
-          ),
+          (m) {
+            final floor = (m['floor'] as num?)?.toInt() ?? 1;
+            return CampusLocation.fromMap(
+              m,
+              defaultBuilding: buildingName,
+              floorHasLift: floorsWithLift.contains(floor),
+              floorHasRamp: floorsWithRamp.contains(floor),
+            );
+          },
         )
         .toList();
 
-    final visibleLocations =
-        allNodes.where((n) => n.type != 'junction').toList();
+    // Tujuan & daftar utama hanya berisi ruangan (tanpa lift, tangga, junction).
+    final roomLocations = allNodes.where((n) => n.isRoom).toList();
+
+    // Titik awal boleh dari pintu masuk (entrance) maupun ruangan.
+    final entrances = allNodes.where((n) => n.isEntrance).toList();
+    final startLocations = [...entrances, ...roomLocations];
 
     final rawEdges = [
       ...(mapData['edges'] as List<dynamic>? ?? const []),
@@ -227,7 +276,8 @@ class CampusMap {
       floors: rawFloors.isEmpty ? const [1] : rawFloors,
       scaleMetersPerPx: scale,
       allNodes: allNodes,
-      locations: visibleLocations,
+      locations: roomLocations,
+      startLocations: startLocations,
       edges: edges,
     );
   }
@@ -240,5 +290,42 @@ class CampusMap {
   /// saveSelectedLocation(locationId) pada sequence diagram UC-05.
   void saveSelectedLocation(String locationId) {
     selectedLocationId = locationId;
+  }
+
+  /// Mencari node terdekat pada lantai tertentu dari posisi ternormalisasi (x, y).
+  CampusLocation? nearestNode({
+    required double normX,
+    required double normY,
+    required int floor,
+    bool wheelchairOnly = false,
+    bool namedOnly = false,
+  }) {
+    final px = normX * canvasWidth;
+    final py = normY * canvasHeight;
+
+    CampusLocation? best;
+    double bestDistSq = double.infinity;
+
+    for (final node in allNodes) {
+      if (node.floor != floor) continue;
+      if (wheelchairOnly && !node.isWheelchairAccessible) continue;
+      if (namedOnly && node.isJunction) continue;
+
+      final dx = node.pixelX - px;
+      final dy = node.pixelY - py;
+      final dSq = dx * dx + dy * dy;
+      if (dSq < bestDistSq) {
+        bestDistSq = dSq;
+        best = node;
+      }
+    }
+    return best;
+  }
+
+  /// Mencari jarak piksel antara dua koordinat ternormalisasi.
+  static double distancePx(double x1, double y1, double x2, double y2) {
+    final dx = (x2 - x1) * canvasWidth;
+    final dy = (y2 - y1) * canvasHeight;
+    return math.sqrt(dx * dx + dy * dy);
   }
 }

@@ -116,6 +116,14 @@
    "floor": 1
   },
   {
+   "id": "G1-L1-J_LB",
+   "name": "Simpang tangga kiri",
+   "x": 640,
+   "y": 655,
+   "type": "junction",
+   "floor": 1
+  },
+  {
    "id": "G1-L1-J_MR",
    "name": "Simpang kanan-tengah",
    "x": 1353,
@@ -137,6 +145,14 @@
    "x": 1385,
    "y": 655,
    "type": "stairs",
+   "floor": 1
+  },
+  {
+   "id": "G1-L1-J_RB",
+   "name": "Simpang tangga kanan",
+   "x": 1353,
+   "y": 655,
+   "type": "junction",
    "floor": 1
   },
   {
@@ -1194,8 +1210,15 @@
   },
   {
    "from": "G1-L1-J_ML",
+   "to": "G1-L1-J_LB",
+   "length_px": 72,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_LB",
    "to": "G1-L1-J_BL",
-   "length_px": 137,
+   "length_px": 65,
    "type": "corridor",
    "wheelchair": true
   },
@@ -1207,9 +1230,9 @@
    "wheelchair": true
   },
   {
-   "from": "G1-L1-J_ML",
+   "from": "G1-L1-J_LB",
    "to": "G1-L1-STR_LB",
-   "length_px": 94,
+   "length_px": 60,
    "type": "corridor",
    "wheelchair": true
   },
@@ -1222,8 +1245,15 @@
   },
   {
    "from": "G1-L1-J_MR",
+   "to": "G1-L1-J_RB",
+   "length_px": 72,
+   "type": "corridor",
+   "wheelchair": true
+  },
+  {
+   "from": "G1-L1-J_RB",
    "to": "G1-L1-J_BR",
-   "length_px": 137,
+   "length_px": 65,
    "type": "corridor",
    "wheelchair": true
   },
@@ -1235,9 +1265,9 @@
    "wheelchair": true
   },
   {
-   "from": "G1-L1-J_MR",
+   "from": "G1-L1-J_RB",
    "to": "G1-L1-STR_RB",
-   "length_px": 79,
+   "length_px": 32,
    "type": "corridor",
    "wheelchair": true
   },
