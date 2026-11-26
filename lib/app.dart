@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/accessibility_controller.dart';
+import 'controllers/account_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/map_controller.dart';
 import 'controllers/profile_controller.dart';
 import 'controllers/registration_controller.dart';
 import 'core/widgets/phone_frame.dart';
 import 'pages/auth/login_page.dart';
+import 'pages/auth/onboarding_page.dart';
 import 'pages/auth/register_page.dart';
 import 'pages/auth/welcome_page.dart';
 import 'pages/navigation/campus_map_page.dart';
+import 'pages/profile/complete_profile_page.dart';
 import 'pages/profile/home_page.dart';
 import 'pages/profile/profile_page.dart';
 
@@ -30,6 +33,7 @@ class DifaPlusApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileController()),
         ChangeNotifierProvider(create: (_) => AccessibilityController()),
         ChangeNotifierProvider(create: (_) => MapController()), // UC-05
+        ChangeNotifierProvider(create: (_) => AccountController()), // edit profil
       ],
       child: Consumer<AccessibilityController>(
         builder: (context, accessibility, _) {
@@ -49,6 +53,8 @@ class DifaPlusApp extends StatelessWidget {
               '/profile': (_) => const ProfilePage(),
               '/home': (_) => const HomePage(),
               '/campus-map': (_) => const CampusMapPage(), // UC-05
+              '/onboarding': (_) => const OnboardingPage(),
+              '/complete-profile': (_) => const CompleteProfilePage(),
             },
           );
         },

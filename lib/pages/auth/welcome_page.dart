@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/accessibility_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/accessible_button.dart';
 import '../../core/widgets/centered_content.dart';
 import '../../core/widgets/difa_logo.dart';
 import '../../core/widgets/scene_illustration.dart';
+import '../../core/widgets/social_button.dart';
 import '../../models/disability_profile.dart';
+import '../../models/user_account.dart';
 
 /// Boundary: WelcomePage
 /// Halaman pembuka sebelum Register / Login. Hanya navigasi.
@@ -17,7 +20,8 @@ class WelcomePage extends StatelessWidget {
   /// MODE DEMO (hanya di debug): lihat tampilan tanpa login/database.
   Future<void> _openDemoSheet(BuildContext context) async {
     final accessibility = context.read<AccessibilityController>();
-    final choice = await showModalBottomSheet<List<DisabilityCategory>>(
+    final auth = context.read<AuthController>();
+    final choice = await showModalBottomSheet<String>(
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -33,33 +37,54 @@ class WelcomePage extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.visibility_off),
               title: const Text('Netra'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, [DisabilityCategory.netra]),
+              onTap: () => Navigator.pop(sheetContext, 'netra'),
             ),
             ListTile(
               leading: const Icon(Icons.hearing_disabled),
               title: const Text('Rungu / Wicara'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, [DisabilityCategory.runguWicara]),
+              onTap: () => Navigator.pop(sheetContext, 'rungu'),
             ),
             ListTile(
               leading: const Icon(Icons.accessible),
               title: const Text('Fisik'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, [DisabilityCategory.fisik]),
+              onTap: () => Navigator.pop(sheetContext, 'fisik'),
             ),
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Tanpa kategori'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, const <DisabilityCategory>[]),
+              onTap: () => Navigator.pop(sheetContext, 'none'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const GoogleMark(),
+              title: const Text('Akun Google baru'),
+              subtitle: const Text('Onboarding lalu banner "Lengkapi profil"'),
+              onTap: () => Navigator.pop(sheetContext, 'google'),
             ),
           ],
         ),
       ),
     );
     if (choice == null || !context.mounted) return;
-    accessibility.applyDemoProfile(choice);
+
+    if (choice == 'google') {
+      auth.applyDemoAccount(
+        name: 'Andi Pratama',
+        role: UserRole.mahasiswa,
+        googleNew: true,
+      );
+      accessibility.applyDemoProfile(const <DisabilityCategory>[]);
+      Navigator.of(context).pushNamed('/onboarding');
+      return;
+    }
+
+    final categories = switch (choice) {
+      'netra' => <DisabilityCategory>[DisabilityCategory.netra],
+      'rungu' => <DisabilityCategory>[DisabilityCategory.runguWicara],
+      'fisik' => <DisabilityCategory>[DisabilityCategory.fisik],
+      _ => <DisabilityCategory>[],
+    };
+    accessibility.applyDemoProfile(categories);
     Navigator.of(context).pushNamed('/home');
   }
 
