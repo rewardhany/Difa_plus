@@ -285,7 +285,7 @@ class _HomePageState extends State<HomePage> {
 
   // ------------------------------------------------------------ AI Konversi
 
-  Widget _buildAiTab() {
+    Widget _buildAiTab() {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -296,7 +296,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'AI Konversi segera hadir',
+            'AI Konversi',
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
@@ -304,8 +304,22 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Ubah materi kuliah menjadi audio atau teks sesuai kebutuhanmu (UC-09).',
+            'Ubah materi kuliah (PPT atau PDF) menjadi audio sesuai kebutuhanmu.',
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: FilledButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Tombol Pilih Materi ditekan')),
+                );
+              },
+              icon: const Icon(Icons.upload_file),
+              label: const Text('Pilih Materi'),
+            ),
           ),
         ],
       ),
