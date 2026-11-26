@@ -26,6 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _tab = 0;
+  bool _bannerDismissed = false; // banner "Lengkapi profil" ditutup (hanya sesi ini)
 
   @override
   void initState() {
@@ -163,6 +164,8 @@ class _HomePageState extends State<HomePage> {
     final textTheme = Theme.of(context).textTheme;
     final firstName = name.trim().split(' ').first;
     final map = context.watch<MapController>();
+    final auth = context.watch<AuthController>();
+    final missing = _missingItems(auth, accessibility);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -179,6 +182,15 @@ class _HomePageState extends State<HomePage> {
               textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 16),
+        if (missing.isNotEmpty && !_bannerDismissed) ...[
+          _CompleteProfileBanner(
+            missing: missing,
+            onComplete: () =>
+                Navigator.of(context).pushNamed('/complete-profile'),
+            onDismiss: () => setState(() => _bannerDismissed = true),
+          ),
+          const SizedBox(height: 16),
+        ],
         _SearchBar(onTap: _openMap),
         const SizedBox(height: 20),
         SingleChildScrollView(
@@ -222,7 +234,12 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 20),
         const _IllustratedBanner(),
         const SizedBox(height: 12),
-        _ModeInfo(text: _modeDescription(accessibility.profile)),
+        _ModeInfo(
+          text: _modeDescription(
+            accessibility.profile,
+            auth.currentAccount?.role,
+          ),
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -270,7 +287,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _modeDescription(DisabilityProfile? profile) {
+  /// Data profil yang masih kosong (untuk banner "Lengkapi profil").
+  List<String> _missingItems(
+    AuthController auth,
+    AccessibilityController accessibility,
+  ) {
+    final account = auth.currentAccount;
+    if (account == null) return const [];
+    final missing = <String>[];
+    if (!account.hasPhone) missing.add('No. telepon');
+    if (account.role == UserRole.mahasiswa &&
+        (accessibility.profile?.isEmpty ?? true)) {
+      missing.add('Jenis disabilitas');
+    }
+    if (!auth.hasPassword) missing.add('Password');
+    return missing;
+  }
+
+  String _modeDescription(DisabilityProfile? profile, [UserRole? role]) {
+    if (role == UserRole.pendamping) {
+      return 'Tampilan standar untuk akun pendamping.';
+    }
     if (profile == null || profile.isEmpty) {
       return 'Tampilan standar — belum ada kategori disabilitas yang diatur.';
     }
@@ -324,6 +361,11 @@ class _HomePageState extends State<HomePage> {
     final textTheme = Theme.of(context).textTheme;
     final categories =
         accessibility.profile?.categories ?? const <DisabilityCategory>[];
+    final isMahasiswa = account == null || account.role == UserRole.mahasiswa;
+    final missing = _missingItems(auth, accessibility);
+    final categoryText = categories.isEmpty
+        ? 'Belum diisi'
+        : categories.map((c) => c.label).join(', ');
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -346,11 +388,10 @@ class _HomePageState extends State<HomePage> {
         Center(
           child: Text(
             name,
-            style:
-                textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
-        if (account != null)
+        if (account != null) ...[
           Center(
             child: Text(
               '${account.role.label} • ${account.email}',
@@ -358,45 +399,72 @@ class _HomePageState extends State<HomePage> {
                   ?.copyWith(color: AppColors.textSecondary),
             ),
           ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Profil Disabilitas',
-                style: textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+          const SizedBox(height: 8),
+          Center(
+            child: Chip(
+              avatar: Icon(
+                auth.isGoogleAccount
+                    ? Icons.verified_user_outlined
+                    : Icons.mail_outline,
+                size: 16,
               ),
-              const SizedBox(height: 8),
-              if (categories.isEmpty)
-                const Text('Belum diatur.')
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final c in categories) Chip(label: Text(c.label)),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              AccessibleButton(
-                label: 'Ubah Profil',
-                icon: Icons.edit_outlined,
-                outlined: true,
-                onPressed: () => Navigator.of(context).pushNamed('/profile'),
+              label: Text(
+                auth.isGoogleAccount ? 'Masuk dengan Google' : 'Masuk dengan email',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _InfoCard(
+            rows: [
+              _InfoRow('Nama', account.fullName),
+              _InfoRow('Email', account.email),
+              _InfoRow(
+                'No. telepon',
+                account.hasPhone ? account.phone! : 'Belum diisi',
+                warn: !account.hasPhone,
+              ),
+              _InfoRow('Peran', account.role.label),
+              if (isMahasiswa)
+                _InfoRow('Jenis disabilitas', categoryText,
+                    warn: categories.isEmpty),
+              _InfoRow(
+                'Password',
+                auth.hasPassword ? 'Sudah dibuat' : 'Belum dibuat',
+                warn: !auth.hasPassword,
               ),
             ],
           ),
+        ],
+        const SizedBox(height: 16),
+        _MenuCard(
+          children: [
+            _MenuTile(
+              icon: Icons.edit_outlined,
+              title: missing.isNotEmpty ? 'Lengkapi Profil' : 'Edit Profil',
+              subtitle: auth.hasPassword
+                  ? 'Nama, no. telepon'
+                  : 'Nama, no. telepon, password',
+              onTap: () => Navigator.of(context).pushNamed('/complete-profile'),
+            ),
+            if (isMahasiswa)
+              _MenuTile(
+                icon: Icons.accessible_forward,
+                title: 'Profil Disabilitas',
+                subtitle: categoryText,
+                onTap: () => Navigator.of(context).pushNamed('/profile'),
+              ),
+            if (account != null && !auth.hasPassword)
+              _MenuTile(
+                icon: Icons.lock_outline,
+                title: 'Atur Password',
+                subtitle: 'Agar bisa login dengan email',
+                onTap: () =>
+                    Navigator.of(context).pushNamed('/complete-profile'),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
-        _ModeInfo(text: _modeDescription(accessibility.profile)),
+        _ModeInfo(text: _modeDescription(accessibility.profile, account?.role)),
         const SizedBox(height: 20),
         AccessibleButton(
           label: 'Keluar',
@@ -654,6 +722,185 @@ class _FacilityCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ------------------------------------------------- Banner & kartu profil
+
+class _CompleteProfileBanner extends StatelessWidget {
+  final List<String> missing;
+  final VoidCallback onComplete;
+  final VoidCallback onDismiss;
+
+  const _CompleteProfileBanner({
+    required this.missing,
+    required this.onComplete,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = Color(0xFFB45309);
+    return Semantics(
+      container: true,
+      label: 'Lengkapi profil kamu. Belum diisi: ${missing.join(', ')}',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 4, 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFCD34D)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const ExcludeSemantics(
+                  child: Icon(Icons.info_outline, color: amber),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Lengkapi profil kamu',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  tooltip: 'Tutup',
+                  onPressed: onDismiss,
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 34, right: 12),
+              child: Text('Belum diisi: ${missing.join(', ')}.'),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.only(left: 34),
+              child: ElevatedButton(
+                onPressed: onComplete,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                ),
+                child: const Text('Lengkapi sekarang'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow {
+  final String label;
+  final String value;
+  final bool warn;
+
+  const _InfoRow(this.label, this.value, {this.warn = false});
+}
+
+class _InfoCard extends StatelessWidget {
+  final List<_InfoRow> rows;
+
+  const _InfoCard({required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          for (final r in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 104,
+                    child: Text(
+                      r.label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      r.value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: r.warn ? const Color(0xFFB45309) : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _MenuCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _MenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
     );
   }
 }
