@@ -3,6 +3,9 @@ import 'campus_map.dart';
 
 double _hypot(double dx, double dy) => math.sqrt(dx * dx + dy * dy);
 
+/// Preferensi akses antar lantai untuk pengguna non-kursi-roda.
+enum VerticalAccessMode { auto, liftOnly, stairsPreferred }
+
 /// Satu baris instruksi teks pada hasil navigasi (UC-06).
 class RouteStep {
   final int floor;
@@ -63,6 +66,7 @@ class RouteProgress {
   final bool hasArrived;
   final double distanceFromRoutePx;
   final FloorTransferPrompt? pendingTransfer;
+  final double? pendingTransferDistancePx;
 
   const RouteProgress({
     required this.progressRatio,
@@ -75,6 +79,7 @@ class RouteProgress {
     required this.hasArrived,
     required this.distanceFromRoutePx,
     this.pendingTransfer,
+    this.pendingTransferDistancePx,
   });
 
   int get progressPercent => (progressRatio * 100).round().clamp(0, 100);
@@ -342,6 +347,8 @@ class CampusRoute {
       hasArrived: false,
       distanceFromRoutePx: bestDistPx,
       pendingTransfer: pendingTransfer,
+      pendingTransferDistancePx:
+          pendingTransfer != null ? bestTransferDist : null,
     );
   }
 }
@@ -358,11 +365,14 @@ class RouteFinder {
     required String startId,
     required String endId,
     required bool wheelchairOnly,
+    VerticalAccessMode verticalMode = VerticalAccessMode.auto,
   }) {
     final startNode = map.nodeById(startId);
     final endNode = map.nodeById(endId);
     if (startNode == null || endNode == null) return null;
 
+    final effectiveMode =
+        wheelchairOnly ? VerticalAccessMode.liftOnly : verticalMode;
     final scale = map.scaleMetersPerPx ?? defaultMetersPerPx;
 
     if (startId == endId) {
@@ -389,6 +399,22 @@ class RouteFinder {
     final Map<String, List<_AdjEntry>> graph = {};
     for (final edge in map.edges) {
       if (wheelchairOnly && !edge.wheelchair) continue;
+
+      final fromNode = map.nodeById(edge.from);
+      final toNode = map.nodeById(edge.to);
+      final touchesStairsNode =
+          fromNode?.type == 'stairs' || toNode?.type == 'stairs';
+      final touchesLiftNode =
+          fromNode?.type == 'lift' || toNode?.type == 'lift';
+
+      if (effectiveMode == VerticalAccessMode.liftOnly && touchesStairsNode) {
+        continue;
+      }
+      if (effectiveMode == VerticalAccessMode.stairsPreferred &&
+          touchesLiftNode) {
+        continue;
+      }
+
       graph.putIfAbsent(edge.from, () => []).add(_AdjEntry(edge.to, edge));
       graph.putIfAbsent(edge.to, () => []).add(_AdjEntry(edge.from, edge));
     }

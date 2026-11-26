@@ -13,12 +13,19 @@ enum MapFilter { ramp, lift, accessibleToilet }
 
 /// Control: MapController
 /// Merealisasikan UC-05 Show Campus Maps, UC-06 Get Campus Route,
-/// serta simulasi posisi real-time mahasiswa disabilitas (joystick & auto-walk).
+/// serta simulasi posisi real-time mahasiswa disabilitas (joystick, auto-walk,
+/// dan perpindahan lantai otomatis dengan waktu tunggu 1 detik di Lift/ujung Tangga).
 class MapController extends ChangeNotifier {
   MapController({MapsService? mapsService})
       : _mapsService = mapsService ?? MapsService();
 
   final MapsService _mapsService;
+
+  /// Waktu tunggu di node Lift / ujung Tangga sebelum pindah lantai otomatis.
+  static const Duration transferWaitDuration = Duration(seconds: 1);
+
+  /// Radius deteksi (dalam piksel kanvas 2000x1125) agar titik tunggu aktif.
+  static const double transferAutoTriggerRadiusPx = 55.0;
 
   MapLoadStatus status = MapLoadStatus.idle;
   CampusMap? campusMap;
@@ -29,6 +36,7 @@ class MapController extends ChangeNotifier {
   String? startLocationId;
   CampusRoute? activeRoute;
   String? routeError;
+  VerticalAccessMode verticalAccessMode = VerticalAccessMode.auto;
 
   // --- State Simulasi Lokasi Mahasiswa Disabilitas ---
   double simX = 0.5;
@@ -39,6 +47,13 @@ class MapController extends ChangeNotifier {
   RouteProgress? routeProgress;
   CampusLocation? nearestLandmark;
 
+  // --- State Waktu Tunggu 1 Detik Pindah Lantai Otomatis ---
+  Timer? _transferDwellTimer;
+  FloorTransferPrompt? activeDwellTransfer;
+  double transferDwellProgress = 0.0; // 0.0 .. 1.0
+  DateTime? _transferCooldownUntil;
+
+  // --- State Auto-Walk ---
   bool isAutoWalking = false;
   Timer? _autoWalkTimer;
   int _autoSegIndex = 0;
@@ -52,9 +67,17 @@ class MapController extends ChangeNotifier {
   String? latestVoicePrompt;
   int voicePromptVersion = 0;
 
+  bool get isWaitingFloorTransfer => activeDwellTransfer != null;
+
+  double get transferWaitRemainingSeconds =>
+      ((1.0 - transferDwellProgress) *
+              (transferWaitDuration.inMilliseconds / 1000.0))
+          .clamp(0.0, 1.0);
+
   /// showCampusMap() — dipanggil CampusMapPage saat peta dibuka.
   Future<void> showCampusMap() async {
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
     status = MapLoadStatus.loading;
     searchQuery = '';
     activeFilters.clear();
@@ -66,11 +89,11 @@ class MapController extends ChangeNotifier {
     routeProgress = null;
     nearestLandmark = null;
     hasSimPosition = false;
+    _transferCooldownUntil = null;
     _resetVoiceTracking();
     notifyListeners();
 
     try {
-      // requestMapData()
       final mapData = await _mapsService.requestMapData();
 
       if (mapData == null) {
@@ -80,7 +103,6 @@ class MapController extends ChangeNotifier {
         return;
       }
 
-      // buildAccessibleMap(mapData)
       campusMap = CampusMap.buildAccessibleMap(mapData);
       status = MapLoadStatus.loaded;
     } catch (_) {
@@ -107,9 +129,7 @@ class MapController extends ChangeNotifier {
   List<CampusLocation> get floorLocations =>
       roomLocations.where((l) => l.floor == activeFloor).toList();
 
-  /// Lokasi yang tampil di daftar bawah (hanya ruangan):
-  /// - Jika sedang mencari / memakai filter: cari lintas semua lantai.
-  /// - Jika tidak: tampilkan ruangan pada lantai aktif saja agar rapi.
+  /// Lokasi yang tampil di daftar bawah (hanya ruangan).
   List<CampusLocation> get visibleLocations {
     final all = roomLocations;
     final hasSearchOrFilter =
@@ -159,6 +179,20 @@ class MapController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Mengubah preferensi akses antar lantai (Otomatis / Lift / Tangga) bagi non-kursi-roda.
+  void setVerticalAccessMode(
+    VerticalAccessMode mode, {
+    required bool wheelchairOnly,
+  }) {
+    if (verticalAccessMode == mode) return;
+    verticalAccessMode = mode;
+    if (activeRoute != null) {
+      calculateRoute(wheelchairOnly: wheelchairOnly);
+    } else {
+      notifyListeners();
+    }
+  }
+
   /// setSelectedLocation(locationId) -> saveSelectedLocation(locationId)
   void setSelectedLocation(String locationId) {
     campusMap?.saveSelectedLocation(locationId);
@@ -172,7 +206,6 @@ class MapController extends ChangeNotifier {
   /// Mengisi titik awal default:
   /// - Profil Fisik -> Pintu Samping (Ramp)
   /// - Non-Fisik    -> Pintu Utama (Tangga)
-  /// sekaligus menempatkan titik simulasi mahasiswa di titik awal tersebut.
   void ensureDefaultStart({required bool wheelchairOnly}) {
     if (campusMap == null) return;
     if (startLocationId == null) {
@@ -191,6 +224,7 @@ class MapController extends ChangeNotifier {
 
   void setStartLocation(String? locationId) {
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
     startLocationId = locationId;
     routeError = null;
     if (locationId != null) {
@@ -200,7 +234,7 @@ class MapController extends ChangeNotifier {
         activeFloor = node.floor;
       }
     }
-    _recomputeProgress(emitVoice: false);
+    _recomputeProgress(emitVoice: false, checkAutoTransfer: false);
     notifyListeners();
   }
 
@@ -210,6 +244,7 @@ class MapController extends ChangeNotifier {
     bool keepStudentPosition = false,
   }) {
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
     routeError = null;
     final map = campusMap;
     final startId = startLocationId;
@@ -228,6 +263,9 @@ class MapController extends ChangeNotifier {
       startId: startId,
       endId: endId,
       wheelchairOnly: wheelchairOnly,
+      verticalMode: wheelchairOnly
+          ? VerticalAccessMode.liftOnly
+          : verticalAccessMode,
     );
 
     if (result == null) {
@@ -242,11 +280,11 @@ class MapController extends ChangeNotifier {
     }
 
     activeRoute = result;
+    _transferCooldownUntil = null;
     _resetVoiceTracking();
 
     if (!keepStudentPosition || !hasSimPosition) {
       _placeStudentAtNode(result.start);
-      // Arahkan heading awal menuju node kedua bila ada di lantai yang sama
       if (result.path.length > 1 && result.path[1].floor == result.start.floor) {
         simHeadingRad = math.atan2(
           result.path[1].pixelY - result.start.pixelY,
@@ -256,7 +294,7 @@ class MapController extends ChangeNotifier {
     }
 
     activeFloor = simFloor;
-    _recomputeProgress(emitVoice: false);
+    _recomputeProgress(emitVoice: false, checkAutoTransfer: false);
     notifyListeners();
     return true;
   }
@@ -289,26 +327,30 @@ class MapController extends ChangeNotifier {
 
   void clearRoute() {
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
     activeRoute = null;
     routeError = null;
     routeProgress = null;
+    _transferCooldownUntil = null;
     _resetVoiceTracking();
     notifyListeners();
   }
 
   // ===========================================================================
-  // SIMULASI LOKASI MAHASISWA (JOYSTICK, PINDAH LANTAI, AUTO-WALK)
+  // SIMULASI LOKASI MAHASISWA (JOYSTICK, PINDAH LANTAI OTOMATIS 1 DETIK, AUTO-WALK)
   // ===========================================================================
 
   /// Mengembalikan titik mahasiswa ke lokasi awal.
   void resetStudentToStart() {
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
     final node = activeRoute?.start ?? startLocation ?? startLocations.firstOrNull;
     if (node == null) return;
     _placeStudentAtNode(node);
     activeFloor = simFloor;
+    _transferCooldownUntil = null;
     _resetVoiceTracking();
-    _recomputeProgress(emitVoice: false);
+    _recomputeProgress(emitVoice: false, checkAutoTransfer: false);
     notifyListeners();
   }
 
@@ -338,19 +380,23 @@ class MapController extends ChangeNotifier {
     }
 
     _updateNearestLandmark();
-    _recomputeProgress(emitVoice: true);
+    _recomputeProgress(emitVoice: true, checkAutoTransfer: true);
     notifyListeners();
   }
 
-  /// Menjalankan perpindahan lantai saat mahasiswa berada di dekat Lift/Tangga rute.
+  /// Menjalankan perpindahan lantai (dipanggil otomatis setelah tunggu 1 detik atau manual).
   void performPendingFloorTransfer() {
-    final transfer = routeProgress?.pendingTransfer;
+    final transfer = activeDwellTransfer ?? routeProgress?.pendingTransfer;
     if (transfer == null) return;
 
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
+    _transferCooldownUntil =
+        DateTime.now().add(const Duration(milliseconds: 1200));
+
     _placeStudentAtNode(transfer.targetNode);
     activeFloor = transfer.targetNode.floor;
-    _recomputeProgress(emitVoice: false);
+    _recomputeProgress(emitVoice: false, checkAutoTransfer: false);
 
     final nextInstr = _currentStepInstruction();
     _emitVoicePrompt(
@@ -360,12 +406,12 @@ class MapController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Memindahkan mahasiswa simulasi ke lantai lain secara manual (mis. saat eksplorasi).
+  /// Memindahkan mahasiswa simulasi ke lantai lain secara manual (saat eksplorasi tanpa rute).
   void moveStudentToFloor(int targetFloor) {
     if (campusMap == null || !floors.contains(targetFloor)) return;
     stopAutoWalk(notify: false);
+    _cancelTransferDwell(notify: false);
 
-    // Cari lift terdekat di lantai tujuan agar terasa realistis
     final liftsOnTarget = campusMap!.allNodes
         .where((n) => n.floor == targetFloor && n.type == 'lift')
         .toList();
@@ -391,7 +437,7 @@ class MapController extends ChangeNotifier {
       hasSimPosition = true;
     }
     activeFloor = simFloor;
-    _recomputeProgress(emitVoice: true);
+    _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
     notifyListeners();
   }
 
@@ -404,7 +450,8 @@ class MapController extends ChangeNotifier {
     final route = activeRoute;
     if (route == null || route.edges.isEmpty) return;
 
-    // Jika sudah tiba atau di luar jalur, mulai dari titik awal rute.
+    _cancelTransferDwell(notify: false);
+
     final prog = routeProgress;
     if (prog == null || prog.hasArrived || prog.isOffRoute) {
       _placeStudentAtNode(route.start);
@@ -419,7 +466,7 @@ class MapController extends ChangeNotifier {
 
     _autoTransferPauseTicks = 0;
     isAutoWalking = true;
-    _recomputeProgress(emitVoice: true);
+    _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
     notifyListeners();
 
     _autoWalkTimer?.cancel();
@@ -434,6 +481,8 @@ class MapController extends ChangeNotifier {
     _autoWalkTimer = null;
     if (isAutoWalking) {
       isAutoWalking = false;
+      activeDwellTransfer = null;
+      transferDwellProgress = 0.0;
       if (notify) notifyListeners();
     }
   }
@@ -449,7 +498,7 @@ class MapController extends ChangeNotifier {
       _placeStudentAtNode(route.end);
       activeFloor = simFloor;
       stopAutoWalk(notify: false);
-      _recomputeProgress(emitVoice: true);
+      _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
       notifyListeners();
       return;
     }
@@ -457,15 +506,9 @@ class MapController extends ChangeNotifier {
     final a = route.path[_autoSegIndex];
     final b = route.path[_autoSegIndex + 1];
 
-    // Perpindahan lantai (Lift / Tangga)
+    // Perpindahan lantai (Lift / ujung Tangga): tunggu tepat 1 detik (30 tick x 33ms)
     if (a.floor != b.floor) {
-      if (_autoTransferPauseTicks < 18) {
-        _autoTransferPauseTicks++;
-        return;
-      }
-      _autoTransferPauseTicks = 0;
-
-      // Lompat sekaligus ke lantai ujung rangkaian lift/tangga yang sama
+      const int waitTicks = 30;
       final edgeType = route.edges[_autoSegIndex].type;
       int j = _autoSegIndex;
       while (j < route.edges.length &&
@@ -474,11 +517,41 @@ class MapController extends ChangeNotifier {
         j++;
       }
       final target = route.path[j];
+
+      if (_autoTransferPauseTicks == 0) {
+        activeDwellTransfer = FloorTransferPrompt(
+          fromFloor: a.floor,
+          toFloor: target.floor,
+          facilityName: a.name,
+          edgeType: edgeType,
+          fromNode: a,
+          targetNode: target,
+          fromPathIndex: _autoSegIndex,
+          targetPathIndex: j,
+        );
+        _emitVoicePrompt(
+          'Tunggu 1 detik di ${a.name} untuk '
+          '${target.floor > a.floor ? 'naik' : 'turun'} ke Lantai ${target.floor}.',
+        );
+      }
+
+      if (_autoTransferPauseTicks < waitTicks) {
+        _autoTransferPauseTicks++;
+        transferDwellProgress =
+            (_autoTransferPauseTicks / waitTicks).clamp(0.0, 1.0);
+        notifyListeners();
+        return;
+      }
+
+      _autoTransferPauseTicks = 0;
+      activeDwellTransfer = null;
+      transferDwellProgress = 0.0;
+
       _placeStudentAtNode(target);
       activeFloor = target.floor;
       _autoSegIndex = j;
       _autoSegT = 0.0;
-      _recomputeProgress(emitVoice: true);
+      _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
       notifyListeners();
       return;
     }
@@ -511,16 +584,81 @@ class MapController extends ChangeNotifier {
 
     activeFloor = simFloor;
     _updateNearestLandmark();
-    _recomputeProgress(emitVoice: true);
+    _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
 
-    if (_autoSegIndex >= route.edges.length || (routeProgress?.hasArrived ?? false)) {
+    if (_autoSegIndex >= route.edges.length ||
+        (routeProgress?.hasArrived ?? false)) {
       _placeStudentAtNode(route.end);
       activeFloor = simFloor;
       stopAutoWalk(notify: false);
-      _recomputeProgress(emitVoice: true);
+      _recomputeProgress(emitVoice: true, checkAutoTransfer: false);
     }
 
     notifyListeners();
+  }
+
+  /// Mengevaluasi apakah mahasiswa sedang berada di titik tunggu 1 detik (Lift / ujung Tangga).
+  void _evaluateAutoTransferDwell() {
+    if (isAutoWalking) return;
+
+    final now = DateTime.now();
+    if (_transferCooldownUntil != null && now.isBefore(_transferCooldownUntil!)) {
+      _cancelTransferDwell(notify: false);
+      return;
+    }
+
+    final transfer = routeProgress?.pendingTransfer;
+    final distPx = routeProgress?.pendingTransferDistancePx ?? double.infinity;
+
+    if (transfer != null && distPx <= transferAutoTriggerRadiusPx) {
+      // Sudah sedang menghitung mundur untuk transfer yang sama
+      if (activeDwellTransfer?.fromNode.id == transfer.fromNode.id &&
+          _transferDwellTimer != null) {
+        return;
+      }
+
+      _cancelTransferDwell(notify: false);
+      activeDwellTransfer = transfer;
+      transferDwellProgress = 0.0;
+      _emitVoicePrompt(
+        'Tunggu 1 detik di ${transfer.facilityName} untuk '
+        '${transfer.directionWord.toLowerCase()} ke Lantai ${transfer.toFloor}.',
+      );
+
+      const int stepMs = 50;
+      final double progressPerTick =
+          stepMs / transferWaitDuration.inMilliseconds;
+
+      _transferDwellTimer = Timer.periodic(
+        const Duration(milliseconds: stepMs),
+        (_) {
+          if (activeDwellTransfer == null || activeRoute == null) {
+            _cancelTransferDwell(notify: true);
+            return;
+          }
+          transferDwellProgress =
+              (transferDwellProgress + progressPerTick).clamp(0.0, 1.0);
+          if (transferDwellProgress >= 1.0) {
+            performPendingFloorTransfer();
+          } else {
+            notifyListeners();
+          }
+        },
+      );
+    } else if (activeDwellTransfer != null) {
+      // Mahasiswa menjauh dari titik Lift/ujung Tangga sebelum 1 detik selesai
+      _cancelTransferDwell(notify: false);
+    }
+  }
+
+  void _cancelTransferDwell({bool notify = true}) {
+    _transferDwellTimer?.cancel();
+    _transferDwellTimer = null;
+    final hadDwell =
+        activeDwellTransfer != null || transferDwellProgress != 0.0;
+    activeDwellTransfer = null;
+    transferDwellProgress = 0.0;
+    if (notify && hadDwell) notifyListeners();
   }
 
   void _placeStudentAtNode(CampusLocation? node) {
@@ -545,10 +683,14 @@ class MapController extends ChangeNotifier {
     );
   }
 
-  void _recomputeProgress({required bool emitVoice}) {
+  void _recomputeProgress({
+    required bool emitVoice,
+    required bool checkAutoTransfer,
+  }) {
     final route = activeRoute;
     if (route == null || !hasSimPosition) {
       routeProgress = null;
+      _cancelTransferDwell(notify: false);
       return;
     }
 
@@ -558,6 +700,10 @@ class MapController extends ChangeNotifier {
       floor: simFloor,
     );
     routeProgress = progress;
+
+    if (checkAutoTransfer) {
+      _evaluateAutoTransferDwell();
+    }
 
     if (!emitVoice) {
       _lastTrackedStepIndex = progress.currentStepIndex;
@@ -585,6 +731,9 @@ class MapController extends ChangeNotifier {
     } else if (!progress.isOffRoute) {
       _wasOffRoute = false;
     }
+
+    // Jika sedang menunggu transfer 1 detik, jangan timpa pengumuman tunggu
+    if (isWaitingFloorTransfer) return;
 
     if (progress.currentStepIndex != _lastTrackedStepIndex &&
         !progress.isOffRoute) {
@@ -621,6 +770,7 @@ class MapController extends ChangeNotifier {
   @override
   void dispose() {
     _autoWalkTimer?.cancel();
+    _transferDwellTimer?.cancel();
     super.dispose();
   }
 }

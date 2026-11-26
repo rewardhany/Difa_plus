@@ -448,11 +448,21 @@ class _CampusMapPageState extends State<CampusMapPage>
                             _buildTransferMarker(
                               node: transfer.fromNode,
                               edgeType: transfer.edgeType,
-                              badgeText:
-                                  '${transfer.directionWord} Lt ${transfer.toFloor}',
+                              badgeText: controller.isWaitingFloorTransfer &&
+                                      controller.activeDwellTransfer?.fromNode
+                                              .id ==
+                                          transfer.fromNode.id
+                                  ? 'Tunggu ${controller.transferWaitRemainingSeconds.toStringAsFixed(1)}s'
+                                  : '${transfer.directionWord} Lt ${transfer.toFloor}',
                               tooltip:
-                                  '${transfer.actionLabel} (ketuk untuk lihat Lt ${transfer.toFloor})',
+                                  '${transfer.actionLabel} (titik tunggu 1 detik)',
                               box: box,
+                              dwellProgress: controller.isWaitingFloorTransfer &&
+                                      controller.activeDwellTransfer?.fromNode
+                                              .id ==
+                                          transfer.fromNode.id
+                                  ? controller.transferDwellProgress
+                                  : null,
                               onTap: () => controller.setFloor(transfer.toFloor),
                             ),
                           for (final transfer in incomingTransfersOnFloor)
@@ -650,7 +660,8 @@ class _CampusMapPageState extends State<CampusMapPage>
     );
   }
 
-  /// Penanda titik transfer antar lantai (Lift / Tangga) khusus pada jalur aktif.
+  /// Penanda titik transfer antar lantai (Lift / Tangga) khusus pada jalur aktif,
+  /// dilengkapi cincin progres saat menunggu 1 detik sebelum pindah lantai otomatis.
   Widget _buildTransferMarker({
     required CampusLocation node,
     required String edgeType,
@@ -658,8 +669,10 @@ class _CampusMapPageState extends State<CampusMapPage>
     required String tooltip,
     required BoxConstraints box,
     required VoidCallback onTap,
+    double? dwellProgress,
   }) {
     const double pinSize = 18;
+    const double ringSize = 32;
     final isLift = edgeType == 'lift';
     final color = isLift ? const Color(0xFF7C3AED) : const Color(0xFFEA580C);
     final cx = node.x * box.maxWidth;
@@ -678,6 +691,19 @@ class _CampusMapPageState extends State<CampusMapPage>
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
+              if (dwellProgress != null)
+                Positioned(
+                  left: (pinSize - ringSize) / 2,
+                  top: (pinSize - ringSize) / 2,
+                  width: ringSize,
+                  height: ringSize,
+                  child: CircularProgressIndicator(
+                    value: dwellProgress,
+                    strokeWidth: 3.2,
+                    color: color,
+                    backgroundColor: color.withValues(alpha: 0.22),
+                  ),
+                ),
               Container(
                 width: pinSize,
                 height: pinSize,
@@ -700,9 +726,9 @@ class _CampusMapPageState extends State<CampusMapPage>
                 ),
               ),
               Positioned(
-                bottom: pinSize + 2,
+                bottom: pinSize + (dwellProgress != null ? 8 : 2),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 96),
+                  constraints: const BoxConstraints(maxWidth: 104),
                   child: _mapPillLabel(badgeText, color),
                 ),
               ),
@@ -969,7 +995,7 @@ class _CampusMapPageState extends State<CampusMapPage>
               ),
               const SizedBox(height: 8),
 
-              // Kotak status aktif (Tiba / Di luar jalur / Pindah lantai / Instruksi saat ini)
+              // Kotak status aktif (Tiba / Menunggu pindah lantai 1 detik / Di luar jalur / Instruksi saat ini)
               if (progress.hasArrived)
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -998,6 +1024,64 @@ class _CampusMapPageState extends State<CampusMapPage>
                       ),
                     ],
                   ),
+                )
+              else if (controller.isWaitingFloorTransfer)
+                Builder(
+                  builder: (_) {
+                    final dwell = controller.activeDwellTransfer!;
+                    final isLift = dwell.edgeType == 'lift';
+                    final accent = isLift
+                        ? const Color(0xFF7C3AED)
+                        : const Color(0xFFEA580C);
+                    final bg = isLift
+                        ? const Color(0xFFF3E8FF)
+                        : const Color(0xFFFFEDD5);
+                    final remaining = controller.transferWaitRemainingSeconds
+                        .toStringAsFixed(1);
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: accent.withValues(alpha: 0.5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isLift ? Icons.elevator : Icons.stairs,
+                                color: accent,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Titik tunggu ${dwell.facilityName} • otomatis ${dwell.directionWord.toLowerCase()} ke Lantai ${dwell.toFloor} ($remaining dtk)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: controller.transferDwellProgress,
+                              minHeight: 6,
+                              backgroundColor: Colors.white,
+                              valueColor: AlwaysStoppedAnimation<Color>(accent),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 )
               else if (progress.isOffRoute)
                 Container(
@@ -1101,31 +1185,6 @@ class _CampusMapPageState extends State<CampusMapPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (pendingTransfer != null) ...[
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: pendingTransfer.edgeType == 'lift'
-                                ? const Color(0xFF7C3AED)
-                                : const Color(0xFFEA580C),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 10,
-                            ),
-                          ),
-                          icon: Icon(
-                            pendingTransfer.edgeType == 'lift'
-                                ? Icons.elevator
-                                : Icons.stairs,
-                            size: 18,
-                          ),
-                          label: Text(
-                            pendingTransfer.actionLabel,
-                            style: const TextStyle(fontSize: 12.5),
-                          ),
-                          onPressed: controller.performPendingFloorTransfer,
-                        ),
-                        const SizedBox(height: 8),
-                      ],
                       if (route != null) ...[
                         FilledButton.tonalIcon(
                           icon: Icon(
@@ -1326,6 +1385,54 @@ class _CampusMapPageState extends State<CampusMapPage>
                 if (id != null) controller.setSelectedLocation(id);
               },
             ),
+            if (!isFisik) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text(
+                    'Akses lantai:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Otomatis', style: TextStyle(fontSize: 11.5)),
+                    visualDensity: VisualDensity.compact,
+                    selected:
+                        controller.verticalAccessMode == VerticalAccessMode.auto,
+                    onSelected: (_) => controller.setVerticalAccessMode(
+                      VerticalAccessMode.auto,
+                      wheelchairOnly: false,
+                    ),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Lift', style: TextStyle(fontSize: 11.5)),
+                    visualDensity: VisualDensity.compact,
+                    selected: controller.verticalAccessMode ==
+                        VerticalAccessMode.liftOnly,
+                    onSelected: (_) => controller.setVerticalAccessMode(
+                      VerticalAccessMode.liftOnly,
+                      wheelchairOnly: false,
+                    ),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Tangga', style: TextStyle(fontSize: 11.5)),
+                    visualDensity: VisualDensity.compact,
+                    selected: controller.verticalAccessMode ==
+                        VerticalAccessMode.stairsPreferred,
+                    onSelected: (_) => controller.setVerticalAccessMode(
+                      VerticalAccessMode.stairsPreferred,
+                      wheelchairOnly: false,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (controller.routeError != null) ...[
               const SizedBox(height: 10),
               Text(
